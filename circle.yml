@@ -26,6 +26,7 @@ checkout:
 dependencies:
     override:
         - go get -u github.com/Masterminds/glide
+        - go get -u github.com/mattn/goveralls
 
 # -----------------------------------
 
@@ -34,3 +35,4 @@ test:
         - make clean
         - make glide
         - make tests
+        - make cover
