@@ -22,8 +22,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"strconv"
-
-	"github.com/cznic/zappy"
 )
 
 var chars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
@@ -48,26 +46,6 @@ func alter(a, b []byte) bool {
 		return false
 	}
 	return false
-}
-
-func encode(src []byte) (dst []byte, err error) {
-
-	if len(src) == 0 {
-		return src, nil
-	}
-
-	return zappy.Encode(nil, src)
-
-}
-
-func decode(src []byte) (dst []byte, err error) {
-
-	if len(src) == 0 {
-		return src, nil
-	}
-
-	return zappy.Decode(nil, src)
-
 }
 
 func encrypt(key []byte, src []byte) (dst []byte, err error) {
