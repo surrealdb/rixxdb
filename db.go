@@ -290,8 +290,10 @@ func (db *DB) Save(w io.Writer) error {
 
 }
 
-// Load loads database operations from a reader. This can be used to
-// playback a database snapshot into an already running database.
+// Sync ensures that all database operations are flushed to the
+// underlying storage. If the database is currently performing
+// a shrink from a previous call to this method, then the call
+// will be ignored. This does nothing on in-memory databases.
 func (db *DB) Sync() error {
 
 	// If there is no file associated
@@ -358,8 +360,12 @@ func (db *DB) Sync() error {
 
 }
 
-// Load loads database operations from a reader. This can be used to
-// playback a database snapshot into an already running database.
+// Shrink ensures that all unnecessary database operations that
+// have been flushed to disk are removed, reducing the output
+// of the append-only log files. If the database is currently
+// performing a shrink from a previous call to this method,
+// then the call will be ignored. This only works for certain
+// storage types, and does nothing on in-memory databases.
 func (db *DB) Shrink() error {
 
 	// If there is no file associated
