@@ -1,0 +1,15 @@
+hash: f7dd01a20846d1fe385e8c72eb9cf473f977db338a10a14fed19839e94d97403
+updated: 2017-02-03T21:36:22.868489071Z
+imports:
+- name: github.com/abcum/emitr
+  version: 67359a63b282c8056e52cf25488937aaddbc2a8b
+- name: github.com/abcum/syncr
+  version: 6796d089909a758a02089109312fbaee2837c11b
+  subpackages:
+  - file
+  - gcs
+  - logr
+  - s3
+- name: github.com/abcum/vtree
+  version: 708d6be3d7c4096be8cb3ec83de45242405b6ce2
+testImports: []

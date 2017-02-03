@@ -1,0 +1,10 @@
+package: github.com/abcum/rixxdb
+import:
+- package: github.com/abcum/emitr
+- package: github.com/abcum/syncr
+  subpackages:
+  - file
+  - gcs
+  - logr
+  - s3
+- package: github.com/abcum/vtree
