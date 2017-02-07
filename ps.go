@@ -44,6 +44,12 @@ func persist(path string, conf *Config) (syncr.Syncable, error) {
 		return logr.New(path, &logr.Options{})
 	}
 
+	// file://path/to/file.db
+	if strings.HasPrefix(path, "file://") {
+		path = strings.TrimLeft(path, "file://")
+		return file.New(path)
+	}
+
 	// /path/to/file.db
 	return file.New(path)
 
