@@ -207,6 +207,10 @@ func (tx *TX) forced() error {
 // Get retrieves a single key:value item.
 func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
 
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
 	if ver == All {
 		return nil, ErrTxVersionNotSupported
 	}
@@ -223,6 +227,10 @@ func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
 
 // GetL retrieves the range of rows which are prefixed with `key`.
 func (tx *TX) GetL(ver int64, key []byte) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if ver == All {
 		return nil, ErrTxVersionNotSupported
@@ -247,6 +255,10 @@ func (tx *TX) GetL(ver int64, key []byte) (kvs []*KV, err error) {
 
 // GetP retrieves the range of rows which are prefixed with `key`.
 func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if ver == All {
 		return nil, ErrTxVersionNotSupported
@@ -280,6 +292,10 @@ func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 // `end` (exclusive). To return the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
 func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if ver == All {
 		return nil, ErrTxVersionNotSupported
@@ -332,6 +348,10 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 // Del deletes a single key:value item.
 func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
 
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
 	if !tx.write {
 		return nil, ErrTxNotWritable
 	}
@@ -353,6 +373,10 @@ func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
 // DelC conditionally deletes a key if the existing value is equal to the
 // expected value.
 func (tx *TX) DelC(ver int64, key, exp []byte) (kv *KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
@@ -387,6 +411,10 @@ func (tx *TX) DelC(ver int64, key, exp []byte) (kv *KV, err error) {
 // DelL deletes the range of rows which are prefixed with `key`.
 func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
 
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
 	if !tx.write {
 		return nil, ErrTxNotWritable
 	}
@@ -418,6 +446,10 @@ func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
 
 // DelP deletes the range of rows which are prefixed with `key`.
 func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
@@ -459,6 +491,10 @@ func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 // `end` (exclusive). To delete the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
 func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
@@ -523,6 +559,10 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 // Put sets the value for a key.
 func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
 
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
 	if !tx.write {
 		return nil, ErrTxNotWritable
 	}
@@ -553,6 +593,10 @@ func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
 // equal to the expected value. To conditionally set a value only if there
 // is no existing entry pass nil for the expected value.
 func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
@@ -595,6 +639,10 @@ func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
 // PutL deletes the range of rows which are prefixed with `key`.
 func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
 	if !tx.write {
 		return nil, ErrTxNotWritable
 	}
@@ -624,6 +672,10 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 
 // PutP deletes the range of rows which are prefixed with `key`.
 func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
@@ -662,6 +714,10 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 // `end` (exclusive). To delete the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
 func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
 
 	if !tx.write {
 		return nil, ErrTxNotWritable
