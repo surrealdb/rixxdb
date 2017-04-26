@@ -1,10 +1,10 @@
 hash: f7dd01a20846d1fe385e8c72eb9cf473f977db338a10a14fed19839e94d97403
-updated: 2017-04-26T23:58:07.849922449+01:00
+updated: 2017-04-27T00:00:25.742173098+01:00
 imports:
 - name: github.com/abcum/emitr
   version: 9140f21d815c7b451a319b580a191a0503821cf9
 - name: github.com/abcum/ptree
-  version: 988d018813f66208e771582e612ed618d11f5482
+  version: 36cafa0736cf6a56612d703bbb5a3eee31b31fb9
 - name: github.com/abcum/syncr
   version: bcadc759927c3521354a671711595988f8f99d99
   subpackages:
@@ -15,5 +15,5 @@ imports:
 - name: github.com/abcum/tlist
   version: 229930efe067d6dae62436d9cf6664d48e2e773f
 - name: github.com/abcum/vtree
-  version: 59856b0cb3b4a22ddb1b116758af8e77e580a6b2
+  version: a4538d9fb50aaea6b43ca6a995cb7ad9a5d9cd0b
 testImports: []
