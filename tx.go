@@ -636,7 +636,7 @@ func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
 
 }
 
-// PutL deletes the range of rows which are prefixed with `key`.
+// PutL updates the range of rows which are prefixed with `key`.
 func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 
 	if tx.db == nil {
@@ -670,7 +670,7 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 
 }
 
-// PutP deletes the range of rows which are prefixed with `key`.
+// PutP updates the range of rows which are prefixed with `key`.
 func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error) {
 
 	if tx.db == nil {
@@ -710,7 +710,7 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 
 }
 
-// PutR deletes the range of `max` rows between `beg` (inclusive) and
+// PutR updates the range of `max` rows between `beg` (inclusive) and
 // `end` (exclusive). To delete the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
 func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err error) {
