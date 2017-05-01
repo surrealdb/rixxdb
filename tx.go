@@ -782,6 +782,11 @@ func (tx *TX) set(src []byte) (dst []byte, err error) {
 }
 
 func (tx *TX) put(ver int64, key, val []byte) {
+
+	if tx.db.file.pntr == nil {
+		return
+	}
+
 	tx.alter = append(tx.alter, '$', 'P', 'U', 'T', ' ')
 	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
 	tx.alter = append(tx.alter, ' ')
@@ -793,9 +798,15 @@ func (tx *TX) put(ver int64, key, val []byte) {
 	tx.alter = append(tx.alter, ' ')
 	tx.alter = append(tx.alter, val...)
 	tx.alter = append(tx.alter, '\n')
+
 }
 
 func (tx *TX) del(ver int64, key []byte) {
+
+	if tx.db.file.pntr == nil {
+		return
+	}
+
 	tx.alter = append(tx.alter, '$', 'D', 'E', 'L', ' ')
 	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
 	tx.alter = append(tx.alter, ' ')
@@ -803,9 +814,11 @@ func (tx *TX) del(ver int64, key []byte) {
 	tx.alter = append(tx.alter, ' ')
 	tx.alter = append(tx.alter, key...)
 	tx.alter = append(tx.alter, '\n')
+
 }
 
 func (tx *TX) out(ver int64, key, val []byte) (out []byte) {
+
 	out = append(out, '$', 'P', 'U', 'T', ' ')
 	out = append(out, strconv.FormatInt(ver, 10)...)
 	out = append(out, ' ')
@@ -817,7 +830,9 @@ func (tx *TX) out(ver int64, key, val []byte) (out []byte) {
 	out = append(out, ' ')
 	out = append(out, val...)
 	out = append(out, '\n')
+
 	return
+
 }
 
 func (tx *TX) inj(r io.Reader) error {
