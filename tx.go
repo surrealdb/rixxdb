@@ -787,7 +787,7 @@ func (tx *TX) put(ver int64, key, val []byte) {
 		return
 	}
 
-	tx.alter = append(tx.alter, '$', 'P', 'U', 'T', ' ')
+	tx.alter = append(tx.alter, put...)
 	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
 	tx.alter = append(tx.alter, ' ')
 	tx.alter = append(tx.alter, strconv.FormatInt(int64(len(key)), 10)...)
@@ -807,7 +807,7 @@ func (tx *TX) del(ver int64, key []byte) {
 		return
 	}
 
-	tx.alter = append(tx.alter, '$', 'D', 'E', 'L', ' ')
+	tx.alter = append(tx.alter, del...)
 	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
 	tx.alter = append(tx.alter, ' ')
 	tx.alter = append(tx.alter, strconv.FormatInt(int64(len(key)), 10)...)
@@ -819,7 +819,7 @@ func (tx *TX) del(ver int64, key []byte) {
 
 func (tx *TX) out(ver int64, key, val []byte) (out []byte) {
 
-	out = append(out, '$', 'P', 'U', 'T', ' ')
+	out = append(out, put...)
 	out = append(out, strconv.FormatInt(ver, 10)...)
 	out = append(out, ' ')
 	out = append(out, strconv.FormatInt(int64(len(key)), 10)...)
@@ -837,8 +837,6 @@ func (tx *TX) out(ver int64, key, val []byte) (out []byte) {
 
 func (tx *TX) inj(r io.Reader) error {
 
-	del := []byte("$DEL ")
-	put := []byte("$PUT ")
 	buf := bufio.NewReaderSize(r, 1*1024*1024)
 
 	for {

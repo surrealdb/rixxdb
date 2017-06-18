@@ -19,6 +19,11 @@ import (
 	"time"
 )
 
+var (
+	del = []byte{'$', 'D', 'E', 'L', ' '}
+	put = []byte{'$', 'P', 'U', 'T', ' '}
+)
+
 const (
 	// Now can be used as the version in get queries to return the
 	// latest version of a key, or in delete queries to remove the
