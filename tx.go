@@ -20,6 +20,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"unsafe"
 
@@ -37,6 +38,7 @@ type TX struct {
 	owned bool
 	alter []byte
 	vtree *vtree.Copy
+	plock sync.RWMutex
 	emitr *emitr.Emitter
 }
 
@@ -215,6 +217,9 @@ func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
 		return nil, ErrTxVersionNotSupported
 	}
 
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
 	kv = &KV{}
 
 	kv.key = key
@@ -237,6 +242,9 @@ func (tx *TX) GetL(ver int64, key []byte) (kvs []*KV, err error) {
 	if ver == All {
 		return nil, ErrTxVersionNotSupported
 	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
 
 	tx.vtree.Root().Subs(key, func(k []byte, l *vtree.List) (exit bool) {
 		if i, v := l.Seek(ver); v != nil {
@@ -269,6 +277,9 @@ func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -306,6 +317,9 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -362,6 +376,9 @@ func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
+
 	kv = &KV{}
 
 	kv.val = tx.vtree.Del(ver, key)
@@ -387,6 +404,9 @@ func (tx *TX) DelC(ver int64, key, exp []byte) (kv *KV, err error) {
 	if key == nil {
 		return nil, ErrTxKeyCanNotBeNil
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	now := tx.vtree.Get(ver, key)
 
@@ -424,6 +444,9 @@ func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
 	if key == nil {
 		return nil, ErrTxKeyCanNotBeNil
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -465,6 +488,9 @@ func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -510,6 +536,9 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -582,6 +611,9 @@ func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
 		return nil, err
 	}
 
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
+
 	kv = &KV{}
 
 	kv.val = tx.vtree.Put(ver, key, val)
@@ -612,6 +644,9 @@ func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
 	if ver == All || ver == Now {
 		return nil, ErrTxVersionNotSupported
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	now := tx.vtree.Get(ver, key)
 
@@ -662,6 +697,9 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 		return nil, err
 	}
 
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
+
 	tx.vtree.Root().Subs(key, func(k []byte, l *vtree.List) (exit bool) {
 		kvs = append(kvs, &KV{ver: ver, key: k, val: val})
 		tx.put(ver, k, val)
@@ -699,6 +737,9 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
@@ -741,6 +782,9 @@ func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err 
 	if max == 0 {
 		max = math.MaxUint64
 	}
+
+	tx.plock.Lock()
+	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
