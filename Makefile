@@ -25,6 +25,10 @@ clean:
 	$(GO) clean -i `glide novendor`
 	find . -type f \( -name '*.cover' -o -name '*.test' \) -exec rm -f {} \;
 
+.PHONY: glide
+glide:
+	glide install
+
 .PHONY: tests
 tests:
 	$(GO) test `glide novendor`
