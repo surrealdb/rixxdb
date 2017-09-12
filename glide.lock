@@ -1,19 +1,166 @@
-hash: f7dd01a20846d1fe385e8c72eb9cf473f977db338a10a14fed19839e94d97403
-updated: 2017-04-27T00:00:25.742173098+01:00
+hash: fc791b2362155802ebea67f4601c4463d493227d0496007fe70dd6ac7fea1a69
+updated: 2017-09-12T16:58:22.199517086+01:00
 imports:
+- name: cloud.google.com/go
+  version: 5a9e19d4e1e41a734154e44a2132b358afb49a03
+  subpackages:
+  - compute/metadata
+  - iam
+  - internal
+  - internal/optional
+  - internal/version
+  - storage
+- name: github.com/abcum/bump
+  version: 8e94c062e9c7a9c89bddc31b17ee499f89698fc5
 - name: github.com/abcum/emitr
-  version: 9140f21d815c7b451a319b580a191a0503821cf9
+  version: a1f6c05c745df9f5135bd0b94952a9c8ab56159a
 - name: github.com/abcum/ptree
   version: 36cafa0736cf6a56612d703bbb5a3eee31b31fb9
 - name: github.com/abcum/syncr
-  version: bcadc759927c3521354a671711595988f8f99d99
+  version: ae775d661d2d4a6a21b91929d07a98b628978f60
   subpackages:
   - file
   - gcs
   - logr
   - s3
 - name: github.com/abcum/tlist
-  version: 229930efe067d6dae62436d9cf6664d48e2e773f
+  version: 9f7bbc04b67495c392639e51b549386fbe6808e9
 - name: github.com/abcum/vtree
   version: a4538d9fb50aaea6b43ca6a995cb7ad9a5d9cd0b
-testImports: []
+- name: github.com/aws/aws-sdk-go
+  version: 49cd7b4cfcfcae1eb815db0a9139f07340bf49c8
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - internal/shareddefaults
+  - private/protocol
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restxml
+  - private/protocol/xml/xmlutil
+  - service/s3
+  - service/s3/s3iface
+  - service/s3/s3manager
+  - service/sts
+- name: github.com/go-ini/ini
+  version: c787282c39ac1fc618827141a1f762240def08a3
+- name: github.com/golang/protobuf
+  version: 17ce1425424ab154092bbb43af630bd647f3bb0d
+  subpackages:
+  - proto
+  - protoc-gen-go/descriptor
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
+- name: github.com/googleapis/gax-go
+  version: 8c160ca1523d8eea3932fbaa494c8964b7724aa8
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: golang.org/x/net
+  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/oauth2
+  version: d89af98d7c6bba047c5a2622f36bc14b8766df85
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
+- name: golang.org/x/text
+  version: bd91bbf73e9a4a801adbfb97133c992678533126
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/api
+  version: 6d17a978cb363067e40a571c7cd7ddc010af35b0
+  subpackages:
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - googleapi/transport
+  - internal
+  - iterator
+  - option
+  - storage/v1
+  - transport/http
+- name: google.golang.org/appengine
+  version: d9a072cfa7b9736e44311ef77b3e09d804bfa599
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
+- name: google.golang.org/genproto
+  version: 595979c8a7bf586b2d293fb42246bf91a0b893d9
+  subpackages:
+  - googleapis/api/annotations
+  - googleapis/iam/v1
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: c443156028b9fa563e063e9fa8ba7881d467833b
+  subpackages:
+  - balancer
+  - codes
+  - connectivity
+  - credentials
+  - grpclb/grpc_lb_v1/messages
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - resolver
+  - stats
+  - status
+  - tap
+  - transport
+testImports:
+- name: github.com/gopherjs/gopherjs
+  version: b40cd48c38f9a18eb3db20d163bad78de12cf0b7
+  subpackages:
+  - js
+- name: github.com/jtolds/gls
+  version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
+- name: github.com/smartystreets/assertions
+  version: 9c0ea8acbc1d8ad689f9e6fe0c1fa5838e0cabc2
+  subpackages:
+  - internal/go-render/render
+  - internal/oglematchers
+- name: github.com/smartystreets/goconvey
+  version: 9e8dc3f972df6c8fcc0375ef492c24d0bb204857
+  subpackages:
+  - convey
+  - convey/gotest
+  - convey/reporting

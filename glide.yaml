@@ -8,3 +8,8 @@ import:
   - logr
   - s3
 - package: github.com/abcum/vtree
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ^1.6.3
+  subpackages:
+  - convey
