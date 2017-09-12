@@ -217,6 +217,8 @@ func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
 
 	kv = &KV{}
 
+	kv.key = key
+
 	kv.val = tx.vtree.Get(ver, key)
 
 	kv.val, err = tx.get(kv.val)
