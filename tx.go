@@ -423,22 +423,23 @@ func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	tx.vtree.Root().Subs(key, func(k []byte, l *vtree.List) (exit bool) {
+	iter := tx.vtree.Cursor()
+
+	for k, l := iter.Seek(key); bytes.HasPrefix(k, key); k, l = iter.Next() {
 		if i, v := l.Seek(ver); v != nil {
 
-			// FIXME add DEL function in here
-
 			if v, err = tx.get(v); err != nil {
-				return true
+				return nil, err
 			}
 
 			kvs = append(kvs, &KV{ver: i, key: k, val: v})
 
 			tx.del(ver, k)
 
+			iter.Del()
+
 		}
-		return
-	})
+	}
 
 	return
 
