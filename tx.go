@@ -325,16 +325,18 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 
 	if bytes.Compare(beg, end) <= 0 {
 		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
-			if i, v := l.Seek(ver); v != nil {
+			if bytes.Compare(k, beg) >= 0 {
+				if i, v := l.Seek(ver); v != nil {
 
-				if v, err = tx.get(v); err != nil {
-					return nil, err
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+
+					max--
+
 				}
-
-				kvs = append(kvs, &KV{ver: i, key: k, val: v})
-
-				max--
-
 			}
 		}
 		return
@@ -342,16 +344,18 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 
 	if bytes.Compare(beg, end) >= 1 {
 		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
-			if i, v := l.Seek(ver); v != nil {
+			if bytes.Compare(end, k) >= 0 {
+				if i, v := l.Seek(ver); v != nil {
 
-				if v, err = tx.get(v); err != nil {
-					return nil, err
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+
+					max--
+
 				}
-
-				kvs = append(kvs, &KV{ver: i, key: k, val: v})
-
-				max--
-
 			}
 		}
 		return
@@ -544,20 +548,22 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 
 	if bytes.Compare(beg, end) <= 0 {
 		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
-			if i, v := l.Seek(ver); v != nil {
+			if bytes.Compare(k, beg) >= 0 {
+				if i, v := l.Seek(ver); v != nil {
 
-				if v, err = tx.get(v); err != nil {
-					return nil, err
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+
+					tx.del(ver, k)
+
+					iter.Del()
+
+					max--
+
 				}
-
-				kvs = append(kvs, &KV{ver: i, key: k, val: v})
-
-				tx.del(ver, k)
-
-				iter.Del()
-
-				max--
-
 			}
 		}
 		return
@@ -565,20 +571,22 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 
 	if bytes.Compare(beg, end) >= 1 {
 		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
-			if i, v := l.Seek(ver); v != nil {
+			if bytes.Compare(end, k) >= 0 {
+				if i, v := l.Seek(ver); v != nil {
 
-				if v, err = tx.get(v); err != nil {
-					return nil, err
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+
+					tx.del(ver, k)
+
+					iter.Del()
+
+					max--
+
 				}
-
-				kvs = append(kvs, &KV{ver: i, key: k, val: v})
-
-				tx.del(ver, k)
-
-				iter.Del()
-
-				max--
-
 			}
 		}
 		return
@@ -790,20 +798,24 @@ func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err 
 
 	if bytes.Compare(beg, end) <= 0 {
 		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
-			kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-			tx.put(ver, k, val)
-			l.Put(ver, val)
-			max--
+			if bytes.Compare(k, beg) >= 0 {
+				kvs = append(kvs, &KV{ver: ver, key: k, val: val})
+				tx.put(ver, k, val)
+				l.Put(ver, val)
+				max--
+			}
 		}
 		return
 	}
 
 	if bytes.Compare(beg, end) >= 1 {
 		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
-			kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-			tx.put(ver, k, val)
-			l.Put(ver, val)
-			max--
+			if bytes.Compare(end, k) >= 0 {
+				kvs = append(kvs, &KV{ver: ver, key: k, val: val})
+				tx.put(ver, k, val)
+				l.Put(ver, val)
+				max--
+			}
 		}
 		return
 	}
