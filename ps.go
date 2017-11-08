@@ -26,22 +26,28 @@ import (
 
 func persist(path string, conf *Config) (syncr.Syncable, error) {
 
-	// s3://user:pass@bucket/path/to/file.db
+	// s3://bucket/path/to/file.db
 	if strings.HasPrefix(path, "s3://") {
 		path = strings.TrimLeft(path, "s3://")
-		return s3.New(path, &s3.Options{})
+		return s3.New(path, &s3.Options{
+			MinSize: 5,
+		})
 	}
 
-	// gcs://user:pass@bucket/path/to/file.db
+	// gcs://bucket/path/to/file.db
 	if strings.HasPrefix(path, "gcs://") {
 		path = strings.TrimLeft(path, "gcs://")
-		return gcs.New(path, &gcs.Options{})
+		return gcs.New(path, &gcs.Options{
+			MinSize: 5,
+		})
 	}
 
 	// logr://path/to/folder/with/file.db
 	if strings.HasPrefix(path, "logr://") {
 		path = strings.TrimLeft(path, "logr://")
-		return logr.New(path, &logr.Options{})
+		return logr.New(path, &logr.Options{
+			MaxSize: 5,
+		})
 	}
 
 	// file://path/to/file.db
