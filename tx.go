@@ -182,6 +182,199 @@ func (tx *TX) forced() error {
 
 }
 
+// Cut removes a single key:value item.
+func (tx *TX) Cut(key []byte) (kv *KV, err error) {
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if !tx.write {
+		return nil, ErrTxNotWritable
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	kv = &KV{key: key}
+
+	kv.val = tx.vtree.Cut(key)
+
+	kv.val, err = tx.get(kv.val)
+
+	return
+
+}
+
+// CutL removes the range of rows which are prefixed with `key`.
+func (tx *TX) CutL(key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if !tx.write {
+		return nil, ErrTxNotWritable
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	tx.vtree.Root().Subs(key, func(k []byte, i *vtree.Item) (e bool) {
+		if t, v := i.Seek(math.MaxUint64); v != nil {
+
+			if v, err = tx.get(v); err != nil {
+				return true
+			}
+
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+			tx.vtree.Cut(k)
+
+			tx.cut(k)
+
+		}
+		return
+	})
+
+	return nil, nil
+
+}
+
+// CutP removes the range of rows which are prefixed with `key`.
+func (tx *TX) CutP(key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if !tx.write {
+		return nil, ErrTxNotWritable
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	iter := tx.vtree.Cursor()
+
+	for k, i := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, i = iter.Next() {
+		if t, v := i.Seek(math.MaxUint64); v != nil {
+
+			if v, err = tx.get(v); err != nil {
+				return nil, err
+			}
+
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+			tx.vtree.Cut(k)
+
+			tx.cut(k)
+
+			max--
+
+		}
+	}
+
+	return
+
+}
+
+// CutR removes the range of `max` rows between `beg` (inclusive) and
+// `end` (exclusive). To return the range in descending order, ensure
+// that `end` sorts lower than `beg` in the key value store.
+func (tx *TX) CutR(beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if !tx.write {
+		return nil, ErrTxNotWritable
+	}
+
+	if beg == nil || end == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	iter := tx.vtree.Cursor()
+
+	if bytes.Compare(beg, end) <= 0 {
+		for k, i := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, i = iter.Next() {
+			if bytes.Compare(k, beg) >= 0 {
+				if t, v := i.Seek(math.MaxUint64); v != nil {
+
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+					tx.vtree.Cut(k)
+
+					tx.cut(k)
+
+					max--
+
+				}
+			}
+		}
+		return
+	}
+
+	if bytes.Compare(beg, end) >= 1 {
+		for k, i := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, i = iter.Prev() {
+			if bytes.Compare(end, k) >= 0 {
+				if t, v := i.Seek(math.MaxUint64); v != nil {
+
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+					tx.vtree.Cut(k)
+
+					tx.cut(k)
+
+					max--
+
+				}
+			}
+		}
+		return
+	}
+
+	return
+
+}
+
 // Get retrieves a single key:value item.
 func (tx *TX) Get(ver uint64, key []byte) (kv *KV, err error) {
 
