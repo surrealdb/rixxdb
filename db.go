@@ -411,10 +411,6 @@ func (db *DB) Shrink() error {
 
 }
 
-// RGet retrieves the range of `max` rows between `beg` (inclusive) and
-// `end` (exclusive). To return the range in descending order, ensure
-// that `end` sorts lower than `beg` in the key value store.
-
 // Close waits for all transactions to finish and releeases resources.
 func (db *DB) Close() error {
 
