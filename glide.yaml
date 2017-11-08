@@ -1,6 +1,5 @@
 package: github.com/abcum/rixxdb
 import:
-- package: github.com/abcum/emitr
 - package: github.com/abcum/syncr
   subpackages:
   - file

@@ -23,7 +23,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/abcum/emitr"
 	"github.com/abcum/syncr"
 	"github.com/abcum/vtree"
 )
@@ -486,7 +485,6 @@ func (db *DB) Begin(writeable bool) (*TX, error) {
 		db:    db,
 		write: writeable,
 		vtree: db.root().Copy(),
-		emitr: &emitr.Emitter{},
 	}
 
 	return tx, nil

@@ -24,7 +24,6 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/abcum/emitr"
 	"github.com/abcum/vtree"
 )
 
@@ -39,7 +38,6 @@ type TX struct {
 	alter []byte
 	vtree *vtree.Copy
 	plock sync.RWMutex
-	emitr *emitr.Emitter
 }
 
 // Closed returns whether the transaction has been closed.
@@ -74,8 +72,7 @@ func (tx *TX) Commit() error {
 func (tx *TX) cancel() error {
 
 	defer func() {
-		tx.db, tx.emitr = nil, nil
-		tx.alter, tx.vtree = nil, nil
+		tx.db, tx.alter, tx.vtree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -94,12 +91,6 @@ func (tx *TX) cancel() error {
 		defer tx.db.lock.Unlock()
 	}
 
-	// If there are any deferred functions
-	// then run them and remove them so
-	// that the memory is freed.
-
-	tx.emitr.Emit("cancel")
-
 	return nil
 
 }
@@ -107,8 +98,7 @@ func (tx *TX) cancel() error {
 func (tx *TX) commit() error {
 
 	defer func() {
-		tx.db, tx.emitr = nil, nil
-		tx.alter, tx.vtree = nil, nil
+		tx.db, tx.alter, tx.vtree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -149,12 +139,6 @@ func (tx *TX) commit() error {
 
 	atomic.StorePointer(&tx.db.tree, unsafe.Pointer(tx.vtree.Tree()))
 
-	// If there are any deferred functions
-	// then run them and remove them so
-	// that the memory is freed.
-
-	tx.emitr.Emit("commit")
-
 	return nil
 
 }
@@ -162,8 +146,7 @@ func (tx *TX) commit() error {
 func (tx *TX) forced() error {
 
 	defer func() {
-		tx.db, tx.emitr = nil, nil
-		tx.alter, tx.vtree = nil, nil
+		tx.db, tx.alter, tx.vtree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -195,12 +178,6 @@ func (tx *TX) forced() error {
 	// thenn swap in the new vtree.
 
 	atomic.StorePointer(&tx.db.tree, unsafe.Pointer(tx.vtree.Tree()))
-
-	// If there are any deferred functions
-	// then run them and remove them so
-	// that the memory is freed.
-
-	tx.emitr.Emit("commit")
 
 	return nil
 
