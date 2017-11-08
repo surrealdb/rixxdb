@@ -26,6 +26,7 @@ import (
 var test = []byte("test")
 
 func TestNone(t *testing.T) {
+
 	Convey("No persistence", t, func() {
 		db, err := Open("memory", &Config{})
 		So(err, ShouldBeNil)
@@ -33,9 +34,7 @@ func TestNone(t *testing.T) {
 		fullTests(db)
 		So(db.Close(), ShouldBeNil)
 	})
-}
 
-func TestPath(t *testing.T) {
 	Convey("Path persistence", t, func() {
 		db, err := Open("test.db", &Config{})
 		So(err, ShouldBeNil)
@@ -44,9 +43,7 @@ func TestPath(t *testing.T) {
 		os.RemoveAll("test.db")
 		So(db.Close(), ShouldBeNil)
 	})
-}
 
-func TestFile(t *testing.T) {
 	Convey("File persistence", t, func() {
 		db, err := Open("file://test.db", &Config{})
 		So(err, ShouldBeNil)
@@ -55,9 +52,7 @@ func TestFile(t *testing.T) {
 		os.RemoveAll("test.db")
 		So(db.Close(), ShouldBeNil)
 	})
-}
 
-func TestLogr(t *testing.T) {
 	Convey("Logr persistence", t, func() {
 		db, err := Open("logr://test/test.db", &Config{})
 		So(err, ShouldBeNil)
@@ -66,6 +61,7 @@ func TestLogr(t *testing.T) {
 		os.RemoveAll("test")
 		So(db.Close(), ShouldBeNil)
 	})
+
 }
 
 func fullTests(db *DB) {
@@ -85,7 +81,7 @@ func fullTests(db *DB) {
 		So(err, ShouldEqual, ErrTxNotWritable)
 		_, err = tx.DelC(0, test, nil)
 		So(err, ShouldEqual, ErrTxNotWritable)
-		_, err = tx.DelL(0, test)
+		_, err = tx.DelL(0, test, 0)
 		So(err, ShouldEqual, ErrTxNotWritable)
 		_, err = tx.DelP(0, test, 0)
 		So(err, ShouldEqual, ErrTxNotWritable)
@@ -96,7 +92,7 @@ func fullTests(db *DB) {
 		So(err, ShouldEqual, ErrTxNotWritable)
 		_, err = tx.PutC(0, test, test, nil)
 		So(err, ShouldEqual, ErrTxNotWritable)
-		_, err = tx.PutL(0, test, test)
+		_, err = tx.PutL(0, test, test, 0)
 		So(err, ShouldEqual, ErrTxNotWritable)
 		_, err = tx.PutP(0, test, test, 0)
 		So(err, ShouldEqual, ErrTxNotWritable)
@@ -116,7 +112,7 @@ func fullTests(db *DB) {
 
 		_, err = tx.Get(0, test)
 		So(err, ShouldEqual, ErrTxClosed)
-		_, err = tx.GetL(0, test)
+		_, err = tx.GetL(0, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.GetP(0, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
@@ -127,7 +123,7 @@ func fullTests(db *DB) {
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.DelC(0, test, nil)
 		So(err, ShouldEqual, ErrTxClosed)
-		_, err = tx.DelL(0, test)
+		_, err = tx.DelL(0, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.DelP(0, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
@@ -138,31 +134,24 @@ func fullTests(db *DB) {
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.PutC(0, test, test, nil)
 		So(err, ShouldEqual, ErrTxClosed)
-		_, err = tx.PutL(0, test, test)
+		_, err = tx.PutL(0, test, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.PutP(0, test, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
 		_, err = tx.PutR(0, test, test, test, 0)
 		So(err, ShouldEqual, ErrTxClosed)
 
+		tx.Cancel()
+
 		// Try passing invalid arguments
 
 		tx, err = db.Begin(true)
-
-		_, err = tx.Get(All, test)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
-		_, err = tx.GetL(All, test)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
-		_, err = tx.GetP(All, test, 0)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
-		_, err = tx.GetR(All, test, test, 0)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
 
 		_, err = tx.Del(0, nil)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
 		_, err = tx.DelC(0, nil, nil)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.DelL(0, nil)
+		_, err = tx.DelL(0, nil, 0)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
 		_, err = tx.DelP(0, nil, 0)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
@@ -171,24 +160,14 @@ func fullTests(db *DB) {
 
 		_, err = tx.Put(0, nil, test)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.Put(All, test, test)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
 		_, err = tx.PutC(0, nil, test, nil)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.PutC(All, test, test, nil)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
-		_, err = tx.PutL(0, nil, test)
+		_, err = tx.PutL(0, nil, test, 0)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.PutL(All, test, test)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
 		_, err = tx.PutP(0, nil, test, 0)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.PutP(All, test, test, 0)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
 		_, err = tx.PutR(0, nil, test, test, 0)
 		So(err, ShouldEqual, ErrTxKeyCanNotBeNil)
-		_, err = tx.PutR(All, test, test, test, 0)
-		So(err, ShouldEqual, ErrTxVersionNotSupported)
 
 		tx.Cancel()
 
