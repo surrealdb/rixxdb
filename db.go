@@ -278,8 +278,8 @@ func (db *DB) Save(w io.Writer) error {
 
 	cur := tx.vtree.Cursor()
 
-	for key, list := cur.First(); key != nil; key, list = cur.Next() {
-		list.Walk(func(ver int64, val []byte) (exit bool) {
+	for key, itm := cur.First(); key != nil; key, itm = cur.Next() {
+		itm.Walk(func(ver uint64, val []byte) (exit bool) {
 			w.Write(tx.out(ver, key, val))
 			return
 		})

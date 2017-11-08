@@ -16,7 +16,7 @@ package rixxdb
 
 // KV represents a KV item stored in the database.
 type KV struct {
-	ver int64
+	ver uint64
 	key []byte
 	val []byte
 }
@@ -37,6 +37,6 @@ func (kv *KV) Val() []byte {
 }
 
 // Ver returns the version for the underlying key-value item.
-func (kv *KV) Ver() int64 {
+func (kv *KV) Ver() uint64 {
 	return kv.ver
 }

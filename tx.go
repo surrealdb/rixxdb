@@ -183,22 +183,20 @@ func (tx *TX) forced() error {
 }
 
 // Get retrieves a single key:value item.
-func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
+func (tx *TX) Get(ver uint64, key []byte) (kv *KV, err error) {
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
 	}
 
-	if ver == All {
-		return nil, ErrTxVersionNotSupported
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
 	}
 
 	tx.plock.RLock()
 	defer tx.plock.RUnlock()
 
-	kv = &KV{}
-
-	kv.key = key
+	kv = &KV{key: key}
 
 	kv.val = tx.vtree.Get(ver, key)
 
@@ -209,27 +207,31 @@ func (tx *TX) Get(ver int64, key []byte) (kv *KV, err error) {
 }
 
 // GetL retrieves the range of rows which are prefixed with `key`.
-func (tx *TX) GetL(ver int64, key []byte) (kvs []*KV, err error) {
+func (tx *TX) GetL(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
 	}
 
-	if ver == All {
-		return nil, ErrTxVersionNotSupported
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
 	}
 
 	tx.plock.RLock()
 	defer tx.plock.RUnlock()
 
-	tx.vtree.Root().Subs(key, func(k []byte, l *vtree.List) (exit bool) {
-		if i, v := l.Seek(ver); v != nil {
+	tx.vtree.Root().Subs(key, func(k []byte, i *vtree.Item) (e bool) {
+		if t, v := i.Seek(ver); v != nil {
 
 			if v, err = tx.get(v); err != nil {
 				return true
 			}
 
-			kvs = append(kvs, &KV{ver: i, key: k, val: v})
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 		}
 		return
@@ -240,18 +242,18 @@ func (tx *TX) GetL(ver int64, key []byte) (kvs []*KV, err error) {
 }
 
 // GetP retrieves the range of rows which are prefixed with `key`.
-func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) GetP(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
 	}
 
-	if ver == All {
-		return nil, ErrTxVersionNotSupported
-	}
-
-	if max == 0 {
-		max = math.MaxUint64
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
 	}
 
 	tx.plock.RLock()
@@ -259,14 +261,14 @@ func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 
 	iter := tx.vtree.Cursor()
 
-	for k, l := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = iter.Next() {
-		if i, v := l.Seek(ver); v != nil {
+	for k, i := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, i = iter.Next() {
+		if t, v := i.Seek(ver); v != nil {
 
 			if v, err = tx.get(v); err != nil {
 				return nil, err
 			}
 
-			kvs = append(kvs, &KV{ver: i, key: k, val: v})
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 			max--
 
@@ -280,18 +282,18 @@ func (tx *TX) GetP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 // GetR retrieves the range of `max` rows between `beg` (inclusive) and
 // `end` (exclusive). To return the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
-func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) GetR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
 	}
 
-	if ver == All {
-		return nil, ErrTxVersionNotSupported
-	}
-
-	if max == 0 {
-		max = math.MaxUint64
+	if beg == nil || end == nil {
+		return nil, ErrTxKeyCanNotBeNil
 	}
 
 	tx.plock.RLock()
@@ -300,15 +302,15 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 	iter := tx.vtree.Cursor()
 
 	if bytes.Compare(beg, end) <= 0 {
-		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
+		for k, i := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, i = iter.Next() {
 			if bytes.Compare(k, beg) >= 0 {
-				if i, v := l.Seek(ver); v != nil {
+				if t, v := i.Seek(ver); v != nil {
 
 					if v, err = tx.get(v); err != nil {
 						return nil, err
 					}
 
-					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 					max--
 
@@ -319,15 +321,15 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 	}
 
 	if bytes.Compare(beg, end) >= 1 {
-		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
+		for k, i := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, i = iter.Prev() {
 			if bytes.Compare(end, k) >= 0 {
-				if i, v := l.Seek(ver); v != nil {
+				if t, v := i.Seek(ver); v != nil {
 
 					if v, err = tx.get(v); err != nil {
 						return nil, err
 					}
 
-					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 					max--
 
@@ -342,7 +344,7 @@ func (tx *TX) GetR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 }
 
 // Del deletes a single key:value item.
-func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
+func (tx *TX) Del(ver uint64, key []byte) (kv *KV, err error) {
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -359,7 +361,7 @@ func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
 	tx.plock.Lock()
 	defer tx.plock.Unlock()
 
-	kv = &KV{}
+	kv = &KV{key: key}
 
 	kv.val = tx.vtree.Del(ver, key)
 
@@ -371,7 +373,7 @@ func (tx *TX) Del(ver int64, key []byte) (kv *KV, err error) {
 
 // DelC conditionally deletes a key if the existing value is equal to the
 // expected value.
-func (tx *TX) DelC(ver int64, key, exp []byte) (kv *KV, err error) {
+func (tx *TX) DelC(ver uint64, key, exp []byte) (kv *KV, err error) {
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -411,7 +413,11 @@ func (tx *TX) DelC(ver int64, key, exp []byte) (kv *KV, err error) {
 }
 
 // DelL deletes the range of rows which are prefixed with `key`.
-func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
+func (tx *TX) DelL(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -428,30 +434,33 @@ func (tx *TX) DelL(ver int64, key []byte) (kvs []*KV, err error) {
 	tx.plock.Lock()
 	defer tx.plock.Unlock()
 
-	iter := tx.vtree.Cursor()
-
-	for k, l := iter.Seek(key); bytes.HasPrefix(k, key); k, l = iter.Next() {
-		if i, v := l.Seek(ver); v != nil {
+	tx.vtree.Root().Subs(key, func(k []byte, i *vtree.Item) (e bool) {
+		if t, v := i.Seek(ver); v != nil {
 
 			if v, err = tx.get(v); err != nil {
-				return nil, err
+				return true
 			}
 
-			kvs = append(kvs, &KV{ver: i, key: k, val: v})
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 			tx.del(ver, k)
 
-			iter.Del()
+			i.Del(ver)
 
 		}
-	}
+		return
+	})
 
 	return
 
 }
 
 // DelP deletes the range of rows which are prefixed with `key`.
-func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) DelP(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -465,23 +474,19 @@ func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	if max == 0 {
-		max = math.MaxUint64
-	}
-
 	tx.plock.Lock()
 	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
-	for k, l := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = iter.Next() {
-		if i, v := l.Seek(ver); v != nil {
+	for k, i := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, i = iter.Next() {
+		if t, v := i.Seek(ver); v != nil {
 
 			if v, err = tx.get(v); err != nil {
 				return nil, err
 			}
 
-			kvs = append(kvs, &KV{ver: i, key: k, val: v})
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 			tx.del(ver, k)
 
@@ -499,7 +504,11 @@ func (tx *TX) DelP(ver int64, key []byte, max uint64) (kvs []*KV, err error) {
 // DelR deletes the range of `max` rows between `beg` (inclusive) and
 // `end` (exclusive). To delete the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
-func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) DelR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -513,25 +522,21 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	if max == 0 {
-		max = math.MaxUint64
-	}
-
 	tx.plock.Lock()
 	defer tx.plock.Unlock()
 
 	iter := tx.vtree.Cursor()
 
 	if bytes.Compare(beg, end) <= 0 {
-		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
+		for k, i := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, i = iter.Next() {
 			if bytes.Compare(k, beg) >= 0 {
-				if i, v := l.Seek(ver); v != nil {
+				if t, v := i.Seek(ver); v != nil {
 
 					if v, err = tx.get(v); err != nil {
 						return nil, err
 					}
 
-					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 					tx.del(ver, k)
 
@@ -546,15 +551,15 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 	}
 
 	if bytes.Compare(beg, end) >= 1 {
-		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
+		for k, i := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, i = iter.Prev() {
 			if bytes.Compare(end, k) >= 0 {
-				if i, v := l.Seek(ver); v != nil {
+				if t, v := i.Seek(ver); v != nil {
 
 					if v, err = tx.get(v); err != nil {
 						return nil, err
 					}
 
-					kvs = append(kvs, &KV{ver: i, key: k, val: v})
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
 
 					tx.del(ver, k)
 
@@ -573,7 +578,7 @@ func (tx *TX) DelR(ver int64, beg, end []byte, max uint64) (kvs []*KV, err error
 }
 
 // Put sets the value for a key.
-func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
+func (tx *TX) Put(ver uint64, key, val []byte) (kv *KV, err error) {
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -585,10 +590,6 @@ func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
 
 	if key == nil {
 		return nil, ErrTxKeyCanNotBeNil
-	}
-
-	if ver == All || ver == Now {
-		return nil, ErrTxVersionNotSupported
 	}
 
 	if val, err = tx.set(val); err != nil {
@@ -611,7 +612,7 @@ func (tx *TX) Put(ver int64, key, val []byte) (kv *KV, err error) {
 // PutC conditionally sets the value for a key if the existing value is
 // equal to the expected value. To conditionally set a value only if there
 // is no existing entry pass nil for the expected value.
-func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
+func (tx *TX) PutC(ver uint64, key, val, exp []byte) (kv *KV, err error) {
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -623,10 +624,6 @@ func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
 
 	if key == nil {
 		return nil, ErrTxKeyCanNotBeNil
-	}
-
-	if ver == All || ver == Now {
-		return nil, ErrTxVersionNotSupported
 	}
 
 	tx.plock.Lock()
@@ -659,7 +656,11 @@ func (tx *TX) PutC(ver int64, key, val, exp []byte) (kv *KV, err error) {
 }
 
 // PutL updates the range of rows which are prefixed with `key`.
-func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
+func (tx *TX) PutL(ver uint64, key, val []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -673,10 +674,6 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	if ver == All || ver == Now {
-		return nil, ErrTxVersionNotSupported
-	}
-
 	if val, err = tx.set(val); err != nil {
 		return nil, err
 	}
@@ -684,10 +681,20 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 	tx.plock.Lock()
 	defer tx.plock.Unlock()
 
-	tx.vtree.Root().Subs(key, func(k []byte, l *vtree.List) (exit bool) {
-		kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-		tx.put(ver, k, val)
-		l.Put(ver, val)
+	tx.vtree.Root().Subs(key, func(k []byte, i *vtree.Item) (e bool) {
+		if t, v := i.Seek(ver); v != nil {
+
+			if v, err = tx.get(v); err != nil {
+				return true
+			}
+
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+			tx.put(ver, k, val)
+
+			i.Put(ver, val)
+
+		}
 		return
 	})
 
@@ -696,7 +703,11 @@ func (tx *TX) PutL(ver int64, key, val []byte) (kvs []*KV, err error) {
 }
 
 // PutP updates the range of rows which are prefixed with `key`.
-func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) PutP(ver uint64, key, val []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -710,16 +721,8 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	if ver == All || ver == Now {
-		return nil, ErrTxVersionNotSupported
-	}
-
 	if val, err = tx.set(val); err != nil {
 		return nil, err
-	}
-
-	if max == 0 {
-		max = math.MaxUint64
 	}
 
 	tx.plock.Lock()
@@ -727,11 +730,22 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 
 	iter := tx.vtree.Cursor()
 
-	for k, l := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = iter.Next() {
-		kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-		tx.put(ver, k, val)
-		l.Put(ver, val)
-		max--
+	for k, i := iter.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, i = iter.Next() {
+		if t, v := i.Seek(ver); v != nil {
+
+			if v, err = tx.get(v); err != nil {
+				return nil, err
+			}
+
+			kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+			tx.put(ver, k, val)
+
+			i.Put(ver, val)
+
+			max--
+
+		}
 	}
 
 	return
@@ -741,7 +755,11 @@ func (tx *TX) PutP(ver int64, key, val []byte, max uint64) (kvs []*KV, err error
 // PutR updates the range of `max` rows between `beg` (inclusive) and
 // `end` (exclusive). To delete the range in descending order, ensure
 // that `end` sorts lower than `beg` in the key value store.
-func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err error) {
+func (tx *TX) PutR(ver uint64, beg, end, val []byte, max uint64) (kvs []*KV, err error) {
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
 
 	if tx.db == nil {
 		return nil, ErrTxClosed
@@ -755,16 +773,8 @@ func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err 
 		return nil, ErrTxKeyCanNotBeNil
 	}
 
-	if ver == All || ver == Now {
-		return nil, ErrTxVersionNotSupported
-	}
-
 	if val, err = tx.set(val); err != nil {
 		return nil, err
-	}
-
-	if max == 0 {
-		max = math.MaxUint64
 	}
 
 	tx.plock.Lock()
@@ -773,24 +783,46 @@ func (tx *TX) PutR(ver int64, beg, end, val []byte, max uint64) (kvs []*KV, err 
 	iter := tx.vtree.Cursor()
 
 	if bytes.Compare(beg, end) <= 0 {
-		for k, l := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = iter.Next() {
+		for k, i := iter.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, i = iter.Next() {
 			if bytes.Compare(k, beg) >= 0 {
-				kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-				tx.put(ver, k, val)
-				l.Put(ver, val)
-				max--
+				if t, v := i.Seek(ver); v != nil {
+
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+					tx.put(ver, k, val)
+
+					i.Put(ver, val)
+
+					max--
+
+				}
 			}
 		}
 		return
 	}
 
 	if bytes.Compare(beg, end) >= 1 {
-		for k, l := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, l = iter.Prev() {
+		for k, i := iter.Seek(end); max > 0 && k != nil && bytes.Compare(beg, k) < 0; k, i = iter.Prev() {
 			if bytes.Compare(end, k) >= 0 {
-				kvs = append(kvs, &KV{ver: ver, key: k, val: val})
-				tx.put(ver, k, val)
-				l.Put(ver, val)
-				max--
+				if t, v := i.Seek(ver); v != nil {
+
+					if v, err = tx.get(v); err != nil {
+						return nil, err
+					}
+
+					kvs = append(kvs, &KV{ver: t, key: k, val: v})
+
+					tx.put(ver, k, val)
+
+					i.Put(ver, val)
+
+					max--
+
+				}
 			}
 		}
 		return

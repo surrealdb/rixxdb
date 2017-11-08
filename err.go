@@ -62,7 +62,4 @@ var (
 
 	// ErrKvNotExpectedValue occurs when conditionally putting or deleting a key-value item.
 	ErrTxNotExpectedValue = errors.New("KV val is not expected value")
-
-	// ErrKvVersionNotSupported when using a version which is not supported by that method.
-	ErrTxVersionNotSupported = errors.New("KV key can not be nil")
 )

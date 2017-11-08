@@ -15,18 +15,7 @@
 package rixxdb
 
 import (
-	"math"
 	"time"
-)
-
-const (
-	// Now can be used as the version in get queries to return the
-	// latest version of a key, or in delete queries to remove the
-	// latest version of a key.
-	Now = math.MaxInt64
-	// All can be used as the version in delete queries to ensure
-	// that the entire key and all versions are removed completely.
-	All = math.MinInt64
 )
 
 const (
