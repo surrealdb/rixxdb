@@ -20,8 +20,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/binary"
 	"errors"
-	"strconv"
+	"io"
 )
 
 var chars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
@@ -124,83 +125,60 @@ func random(l int) []byte {
 
 }
 
-func readver(b *bufio.Reader) (int64, error) {
+func wver(v uint64) (bit []byte) {
 
-	data, err := b.ReadBytes(' ')
-	if err != nil {
-		return 0, err
-	}
+	bit = make([]byte, 8)
 
-	data = bytes.TrimSuffix(data, []byte{' '})
+	binary.BigEndian.PutUint64(bit, uint64(v))
 
-	return strconv.ParseInt(string(data), 10, 64)
+	return
+}
+
+func wlen(v []byte) (bit []byte) {
+
+	bit = make([]byte, 8)
+
+	binary.BigEndian.PutUint64(bit, uint64(len(v)))
+
+	return
+}
+
+func rint(b *bufio.Reader) (uint64, error) {
+
+	v := make([]byte, 8)
+
+	_, err := io.ReadFull(b, v)
+
+	return binary.BigEndian.Uint64(v), err
 
 }
 
-func readkey(b *bufio.Reader) (key []byte, err error) {
+func rkey(b *bufio.Reader) ([]byte, error) {
 
-	data, err := b.ReadBytes(' ')
+	l, err := rint(b)
 	if err != nil {
 		return nil, err
 	}
 
-	data = bytes.TrimSuffix(data, []byte{' '})
+	v := make([]byte, int(l))
 
-	num, err := strconv.ParseInt(string(data), 10, 64)
-	if err != nil {
-		return nil, err
-	}
+	_, err = io.ReadFull(b, v)
 
-	if key, err = readall(b, num); err != nil {
-		return nil, err
-	}
-
-	if _, err = b.Discard(1); err != nil {
-		return nil, err
-	}
-
-	return
+	return v, err
 
 }
 
-func readval(b *bufio.Reader) (val []byte, err error) {
+func rval(b *bufio.Reader) ([]byte, error) {
 
-	data, err := b.ReadBytes(' ')
+	l, err := rint(b)
 	if err != nil {
 		return nil, err
 	}
 
-	data = bytes.TrimSuffix(data, []byte{' '})
+	v := make([]byte, int(l))
 
-	num, err := strconv.ParseInt(string(data), 10, 64)
-	if err != nil {
-		return nil, err
-	}
+	_, err = io.ReadFull(b, v)
 
-	if val, err = readall(b, num); err != nil {
-		return nil, err
-	}
-
-	if _, err = b.Discard(1); err != nil {
-		return nil, err
-	}
-
-	return
-
-}
-
-func readall(b *bufio.Reader, num int64) (out []byte, err error) {
-
-	var got int
-
-	out = make([]byte, num)
-
-	for have, want := 0, int(num); have < want; have += got {
-		if got, err = b.Read(out[have:]); err != nil {
-			return nil, err
-		}
-	}
-
-	return
+	return v, err
 
 }

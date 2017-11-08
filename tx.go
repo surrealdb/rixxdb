@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"io"
 	"math"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -817,53 +816,56 @@ func (tx *TX) set(src []byte) (dst []byte, err error) {
 	return
 }
 
-func (tx *TX) put(ver int64, key, val []byte) {
+func (tx *TX) put(ver uint64, key, val []byte) {
 
 	if tx.db.file.pntr == nil {
 		return
 	}
 
-	tx.alter = append(tx.alter, put...)
-	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
-	tx.alter = append(tx.alter, ' ')
-	tx.alter = append(tx.alter, strconv.FormatInt(int64(len(key)), 10)...)
-	tx.alter = append(tx.alter, ' ')
+	tx.alter = append(tx.alter, 'P')
+	tx.alter = append(tx.alter, wver(ver)...)
+	tx.alter = append(tx.alter, wlen(key)...)
 	tx.alter = append(tx.alter, key...)
-	tx.alter = append(tx.alter, ' ')
-	tx.alter = append(tx.alter, strconv.FormatInt(int64(len(val)), 10)...)
-	tx.alter = append(tx.alter, ' ')
+	tx.alter = append(tx.alter, wlen(val)...)
 	tx.alter = append(tx.alter, val...)
 	tx.alter = append(tx.alter, '\n')
 
 }
 
-func (tx *TX) del(ver int64, key []byte) {
+func (tx *TX) del(ver uint64, key []byte) {
 
 	if tx.db.file.pntr == nil {
 		return
 	}
 
-	tx.alter = append(tx.alter, del...)
-	tx.alter = append(tx.alter, strconv.FormatInt(ver, 10)...)
-	tx.alter = append(tx.alter, ' ')
-	tx.alter = append(tx.alter, strconv.FormatInt(int64(len(key)), 10)...)
-	tx.alter = append(tx.alter, ' ')
+	tx.alter = append(tx.alter, 'D')
+	tx.alter = append(tx.alter, wver(ver)...)
+	tx.alter = append(tx.alter, wlen(key)...)
 	tx.alter = append(tx.alter, key...)
 	tx.alter = append(tx.alter, '\n')
 
 }
 
-func (tx *TX) out(ver int64, key, val []byte) (out []byte) {
+func (tx *TX) cut(key []byte) {
 
-	out = append(out, put...)
-	out = append(out, strconv.FormatInt(ver, 10)...)
-	out = append(out, ' ')
-	out = append(out, strconv.FormatInt(int64(len(key)), 10)...)
-	out = append(out, ' ')
+	if tx.db.file.pntr == nil {
+		return
+	}
+
+	tx.alter = append(tx.alter, 'C')
+	tx.alter = append(tx.alter, wlen(key)...)
+	tx.alter = append(tx.alter, key...)
+	tx.alter = append(tx.alter, '\n')
+
+}
+
+func (tx *TX) out(ver uint64, key, val []byte) (out []byte) {
+
+	out = append(out, 'P')
+	out = append(out, wver(ver)...)
+	out = append(out, wlen(key)...)
 	out = append(out, key...)
-	out = append(out, ' ')
-	out = append(out, strconv.FormatInt(int64(len(val)), 10)...)
-	out = append(out, ' ')
+	out = append(out, wlen(val)...)
 	out = append(out, val...)
 	out = append(out, '\n')
 
@@ -877,39 +879,51 @@ func (tx *TX) inj(r io.Reader) error {
 
 	for {
 
+		var bit byte
 		var err error
-		var ver int64
+		var ver uint64
 		var key []byte
 		var val []byte
-		var data []byte
 
-		if data, err = buf.ReadBytes(' '); err == io.EOF {
+		if bit, err = buf.ReadByte(); err == io.EOF {
 			break
 		}
 
-		if bytes.Equal(del, data) {
-			if ver, err = readver(buf); err != nil {
+		switch bit {
+
+		case '\n':
+			continue
+
+		case 'C':
+			if key, err = rkey(buf); err != nil {
 				return err
 			}
-			if key, err = readkey(buf); err != nil {
+			tx.vtree.Cut(key)
+			continue
+
+		case 'D':
+			if ver, err = rint(buf); err != nil {
+				return err
+			}
+			if key, err = rkey(buf); err != nil {
 				return err
 			}
 			tx.vtree.Del(ver, key)
 			continue
-		}
 
-		if bytes.Equal(put, data) {
-			if ver, err = readver(buf); err != nil {
+		case 'P':
+			if ver, err = rint(buf); err != nil {
 				return err
 			}
-			if key, err = readkey(buf); err != nil {
+			if key, err = rkey(buf); err != nil {
 				return err
 			}
-			if val, err = readval(buf); err != nil {
+			if val, err = rval(buf); err != nil {
 				return err
 			}
 			tx.vtree.Put(ver, key, val)
 			continue
+
 		}
 
 		return ErrDbFileContentsInvalid
