@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: abcum/circle-golang:latest
+        environment:
+          GOOGLE_APPLICATION_CREDENTIALS: /root/gcloud-service-key.json
     working_directory: /go/src/github.com/abcum/rixxdb
     steps:
       - checkout
@@ -10,8 +12,8 @@ jobs:
           name: Clean
           command: make clean
       - run:
-          name: Glide
-          command: make glide
+          name: Setup
+          command: make setup
       - run:
           name: Tests
           command: make tests

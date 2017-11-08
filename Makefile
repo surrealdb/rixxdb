@@ -22,27 +22,19 @@ default:
 .PHONY: clean
 clean:
 	rm -rf vendor
-	$(GO) clean -i `glide novendor`
+	$(GO) clean -i
 	find . -type f \( -name '*.cover' -o -name '*.test' \) -exec rm -f {} \;
 
-.PHONY: glide
-glide:
+.PHONY: setup
+setup:
 	glide install
 
 .PHONY: tests
 tests:
-	$(GO) test `glide novendor`
-
-.PHONY: build
-build:
-	$(GO) build -v
-
-.PHONY: install
-install:
-	$(GO) install -v
+	$(GO) test -v ./...
 
 .PHONY: cover
 cover:
 	echo 'mode: atomic' > main.cover
-	glide novendor | cut -d '/' -f-2 | xargs -I % sh -c 'touch temp.cover; $(GO) test -covermode=count -coverprofile=temp.cover %; tail -n +2 temp.cover >> main.cover; rm temp.cover;'
+	glide novendor | cut -d '/' -f-2 | xargs -I % sh -c 'touch temp.cover; go test -covermode=count -coverprofile=temp.cover %; tail -n +2 temp.cover >> main.cover; rm temp.cover;'
 	goveralls -coverprofile=./main.cover -service=circle-ci -repotoken=${COVERALLS}
