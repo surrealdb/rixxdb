@@ -23,8 +23,9 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/abcum/ptree"
 	"github.com/abcum/syncr"
-	"github.com/abcum/vtree"
+	"github.com/abcum/tlist"
 )
 
 // DB represents a database which operates in memory, and persists to
@@ -70,7 +71,7 @@ func Open(path string, conf *Config) (*DB, error) {
 		open: true,
 		path: path,
 		conf: conf,
-		tree: unsafe.Pointer(vtree.New()),
+		tree: unsafe.Pointer(ptree.New()),
 	}
 
 	// Check that if there is an encryption key specified
@@ -176,8 +177,8 @@ func (db *DB) shrk() {
 
 }
 
-func (db *DB) root() *vtree.Tree {
-	return (*vtree.Tree)(atomic.LoadPointer(&db.tree))
+func (db *DB) root() *ptree.Tree {
+	return (*ptree.Tree)(atomic.LoadPointer(&db.tree))
 }
 
 func (db *DB) push(b []byte) error {
@@ -276,11 +277,11 @@ func (db *DB) Save(w io.Writer) error {
 
 	defer tx.Cancel()
 
-	cur := tx.vtree.Cursor()
+	cur := tx.ptree.Cursor()
 
-	for key, itm := cur.First(); key != nil; key, itm = cur.Next() {
-		itm.Walk(func(ver uint64, val []byte) (exit bool) {
-			w.Write(tx.out(ver, key, val))
+	for k, l := cur.First(); k != nil; k, l = cur.Next() {
+		l.(*tlist.List).Walk(func(i *tlist.Item) (e bool) {
+			w.Write(tx.out(i.Ver(), k, i.Val()))
 			return
 		})
 	}
@@ -484,7 +485,7 @@ func (db *DB) Begin(writeable bool) (*TX, error) {
 	tx := &TX{
 		db:    db,
 		write: writeable,
-		vtree: db.root().Copy(),
+		ptree: db.root().Copy(),
 	}
 
 	return tx, nil

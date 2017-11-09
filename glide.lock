@@ -1,5 +1,5 @@
-hash: 4b4af24846264ad190bb17025ea4ac318dbc29053a0a9ae9a150818d51ddbce3
-updated: 2017-11-08T12:37:12.89706Z
+hash: a149b8a928a07f81196f7e538fc36da17179095e17aeaa45abcceb2f140b735a
+updated: 2017-11-09T17:16:52.763723Z
 imports:
 - name: cloud.google.com/go
   version: 2d3a6656c17a60b0815b7e06ab0be04eacb6e613
@@ -12,8 +12,10 @@ imports:
   - storage
 - name: github.com/abcum/bump
   version: a387c1b94124df52e6cd702ed49ac8442d13dc1f
+- name: github.com/abcum/ptree
+  version: 42a9901f14a8f1e96a135d9d50a881068c2e9237
 - name: github.com/abcum/syncr
-  version: b8770625fb90eaf55821672b4fb14106f98f98d4
+  version: ea52fa5bfae9223d84a5a5b29adc9853084470b3
   subpackages:
   - file
   - gcs
@@ -21,10 +23,8 @@ imports:
   - s3
 - name: github.com/abcum/tlist
   version: 6c74cef6e6785964f5984f7ff480148aa5f9e679
-- name: github.com/abcum/vtree
-  version: ca33c5085719d10fccd1311b77f61c56f70c5675
 - name: github.com/aws/aws-sdk-go
-  version: 6061953e33da7e141a16c70ec9535467ce7f189a
+  version: a201bf33b18ad4ab54344e4bc26b87eb6ad37b8e
   subpackages:
   - aws
   - aws/awserr
@@ -94,7 +94,7 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/api
-  version: 76b09a3314405551b1f19de9944347fcda3f80ae
+  version: 34bc9e3ce3692fb01d22f685df28518773cbdae9
   subpackages:
   - gensupport
   - googleapi
@@ -124,7 +124,7 @@ imports:
   - googleapis/iam/v1
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: abd3e10d785b2ef7e32b5207eb7c303301a4ac84
+  version: ebefec97ddde8309567144d2cdffe9801fda7fc0
   subpackages:
   - balancer
   - balancer/roundrobin

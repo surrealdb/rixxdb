@@ -1,13 +1,24 @@
 package: github.com/abcum/rixxdb
 import:
+- package: github.com/abcum/ptree
 - package: github.com/abcum/syncr
   subpackages:
   - file
   - gcs
   - logr
   - s3
-- package: github.com/abcum/vtree
+- package: github.com/abcum/tlist
 testImport:
+- package: cloud.google.com/go
+  version: ^0.16.0
+  subpackages:
+  - storage
+- package: github.com/aws/aws-sdk-go
+  version: ^1.12.25
+  subpackages:
+  - aws
+  - aws/session
+  - service/s3
 - package: github.com/smartystreets/goconvey
   version: ^1.6.3
   subpackages:
