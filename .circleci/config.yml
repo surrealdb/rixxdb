@@ -9,6 +9,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Auth
+          command: gcauth
+      - run:
           name: Clean
           command: make clean
       - run:
