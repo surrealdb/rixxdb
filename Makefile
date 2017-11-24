@@ -31,7 +31,7 @@ setup:
 
 .PHONY: tests
 tests:
-	$(GO) test -v ./...
+	$(GO) test ./...
 
 .PHONY: cover
 cover:
