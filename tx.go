@@ -175,7 +175,7 @@ func (tx *TX) forced() error {
 
 	// If the transaction successfully
 	// synced with the database file
-	// thenn swap in the new vtree.
+	// then swap in the new vtree.
 
 	atomic.StorePointer(&tx.db.tree, unsafe.Pointer(tx.ptree.Tree()))
 
