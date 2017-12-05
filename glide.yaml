@@ -14,7 +14,7 @@ testImport:
   subpackages:
   - storage
 - package: github.com/aws/aws-sdk-go
-  version: ^1.12.25
+  version: ^1.12.40
   subpackages:
   - aws
   - aws/session
