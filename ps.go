@@ -28,7 +28,7 @@ func persist(path string, conf *Config) (syncr.Syncable, error) {
 
 	// s3://bucket/path/to/file.db
 	if strings.HasPrefix(path, "s3://") {
-		path = strings.TrimLeft(path, "s3://")
+		path = strings.TrimPrefix(path, "s3://")
 		return s3.New(path, &s3.Options{
 			MinSize: 5,
 		})
@@ -36,7 +36,7 @@ func persist(path string, conf *Config) (syncr.Syncable, error) {
 
 	// gcs://bucket/path/to/file.db
 	if strings.HasPrefix(path, "gcs://") {
-		path = strings.TrimLeft(path, "gcs://")
+		path = strings.TrimPrefix(path, "gcs://")
 		return gcs.New(path, &gcs.Options{
 			MinSize: 5,
 		})
@@ -44,7 +44,7 @@ func persist(path string, conf *Config) (syncr.Syncable, error) {
 
 	// logr://path/to/folder/with/file.db
 	if strings.HasPrefix(path, "logr://") {
-		path = strings.TrimLeft(path, "logr://")
+		path = strings.TrimPrefix(path, "logr://")
 		return logr.New(path, &logr.Options{
 			MaxSize: 5,
 		})
@@ -52,7 +52,7 @@ func persist(path string, conf *Config) (syncr.Syncable, error) {
 
 	// file://path/to/file.db
 	if strings.HasPrefix(path, "file://") {
-		path = strings.TrimLeft(path, "file://")
+		path = strings.TrimPrefix(path, "file://")
 		return file.New(path)
 	}
 
