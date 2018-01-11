@@ -1228,6 +1228,12 @@ func (tx *TX) inj(r io.Reader) error {
 		case '\n':
 			continue
 
+		case 'E':
+
+			tx.ptree = ptree.New().Copy()
+
+			continue
+
 		case 'C':
 
 			if key, err = rkey(buf); err != nil {

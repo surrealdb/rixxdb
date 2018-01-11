@@ -18,6 +18,8 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,6 +38,7 @@ import (
 // when the transaction started.
 type DB struct {
 	open bool
+	kind string
 	path string
 	conf *Config
 	lock sync.Mutex
@@ -60,6 +63,10 @@ type DB struct {
 		lock sync.Mutex
 		pntr syncr.Syncable
 	}
+	temp struct {
+		lock sync.Mutex
+		pntr syncr.Syncable
+	}
 }
 
 // Open creates and opens a database at the given path. If the file
@@ -71,6 +78,7 @@ func Open(path string, conf *Config) (*DB, error) {
 		open: true,
 		path: path,
 		conf: conf,
+		kind: "memory",
 		tree: unsafe.Pointer(ptree.New()),
 	}
 
@@ -92,23 +100,25 @@ func Open(path string, conf *Config) (*DB, error) {
 
 		var err error
 
-		if db.file.pntr, err = persist(path, conf); err != nil {
+		db.kind, db.path = db.locate(path)
+
+		if db.file.pntr, err = db.syncer(db.path); err != nil {
 			return nil, err
 		}
 
 		// Go back to beg of file for reading.
-		if _, err := db.file.pntr.Seek(0, 0); err != nil {
+		if _, err = db.file.pntr.Seek(0, 0); err != nil {
 			db.file.pntr.Close()
 			return nil, err
 		}
 
-		if err := db.Load(db.file.pntr); err != nil {
+		if err = db.Load(db.file.pntr); err != nil {
 			db.file.pntr.Close()
 			return nil, err
 		}
 
 		// Go back to end of file for writing.
-		if _, err := db.file.pntr.Seek(0, 2); err != nil {
+		if _, err = db.file.pntr.Seek(0, 2); err != nil {
 			db.file.pntr.Close()
 			return nil, err
 		}
@@ -272,7 +282,10 @@ func (db *DB) Load(r io.Reader) error {
 // save a database snapshot to a secondary file or stream.
 func (db *DB) Save(w io.Writer) error {
 
-	tx, err := db.Begin(false)
+	var tx *TX
+	var err error
+
+	tx, err = db.Begin(false)
 	if err != nil {
 		return err
 	}
@@ -282,10 +295,16 @@ func (db *DB) Save(w io.Writer) error {
 	cur := tx.ptree.Cursor()
 
 	for k, l := cur.First(); k != nil; k, l = cur.Next() {
+
 		l.(*tlist.List).Walk(func(i *tlist.Item) (e bool) {
-			w.Write(tx.out(i.Ver(), k, i.Val()))
-			return
+			_, err = w.Write(tx.out(i.Ver(), k, i.Val()))
+			return err != nil
 		})
+
+		if err != nil {
+			return err
+		}
+
 	}
 
 	return nil
@@ -421,7 +440,131 @@ func (db *DB) Shrink() error {
 	db.file.lock.Lock()
 	defer db.file.lock.Unlock()
 
-	// TODO preform a file shrink here
+	// If the current data storage
+	// type is file, then write the
+	// data, and rotate the files.
+
+	if db.kind == "file" {
+
+		var err error
+
+		// Write all of the current
+		// PUT data to a temporary
+		// file which we will rotate.
+
+		if db.temp.pntr, err = db.syncer(db.path + ".tmp"); err != nil {
+			return err
+		}
+
+		// Save a current snapshot of
+		// all of the database content
+		// to the temporary file.
+
+		if err = db.Save(db.temp.pntr); err != nil {
+			return err
+		}
+
+		// Close the temporary file
+		// pointer as we have written
+		// the snapshot data to it.
+
+		if err = db.temp.pntr.Close(); err != nil {
+			return err
+		}
+
+		// Close the current pointer
+		// to the data file so that we
+		// can rotate the files.
+
+		if err = db.file.pntr.Close(); err != nil {
+			return err
+		}
+
+		// Rotate the temporary file
+		// into the main data file by
+		// renaming the temporary file.
+
+		if err = os.Rename(db.path+".tmp", db.path); err != nil {
+			return err
+		}
+
+		// Rotate the temporary file
+		// into the main data file and
+		// obtain a new file reference.
+
+		if db.file.pntr, err = db.syncer(db.path); err != nil {
+			return err
+		}
+
+		// Reinitialise the send buffer
+		// to flush to the new data
+		// file reference.
+
+		db.send.pntr = bufio.NewWriter(db.file.pntr)
+
+	}
+
+	// If the current data storage
+	// type is a stream, then append
+	// the data and mark the shrink.
+
+	if db.kind == "s3" || db.kind == "gcs" || db.kind == "logr" {
+
+		var err error
+
+		e := filepath.Ext(db.path)
+		f := db.path[:len(db.path)-len(e)]
+		t := time.Now().UTC().Format("2006-01-02T15-04-05.999999999")
+
+		// Open a new temporary file so
+		// that we can mark the current
+		// shrink time to storage.
+
+		if db.temp.pntr, err = db.syncer(f + "-" + t + ".shrink" + e); err != nil {
+			return err
+		}
+
+		// Write an 'ERASE' marker to
+		// the temporary file so that all
+		// historic writes are ignored.
+
+		if _, err = db.temp.pntr.Write([]byte("E")); err != nil {
+			return err
+		}
+
+		// Sync the temporary file to
+		// the storage immediately so
+		// that the time is recorded.
+
+		if err = db.temp.pntr.Sync(); err != nil {
+			return err
+		}
+
+		// Once we have written the
+		// 'ERASE' marker, we can
+		// close the temporary file.
+
+		if err = db.temp.pntr.Close(); err != nil {
+			return err
+		}
+
+		// Flush the snapshot to the file
+		// and ensure that the file is
+		// synced to storage in the OS.
+
+		if err = db.Save(db.send.pntr); err != nil {
+			return err
+		}
+
+		if err = db.send.pntr.Flush(); err != nil {
+			return err
+		}
+
+		if err = db.file.pntr.Sync(); err != nil {
+			return err
+		}
+
+	}
 
 	return nil
 

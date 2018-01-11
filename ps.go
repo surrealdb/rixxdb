@@ -24,39 +24,56 @@ import (
 	"github.com/abcum/syncr/s3"
 )
 
-func persist(path string, conf *Config) (syncr.Syncable, error) {
+func (db *DB) locate(path string) (string, string) {
 
 	// s3://bucket/path/to/file.db
 	if strings.HasPrefix(path, "s3://") {
-		path = strings.TrimPrefix(path, "s3://")
+		return "s3", strings.TrimPrefix(path, "s3://")
+	}
+
+	// gcs://bucket/path/to/file.db
+	if strings.HasPrefix(path, "gcs://") {
+		return "gcs", strings.TrimPrefix(path, "gcs://")
+	}
+
+	// logr://path/to/folder/with/file.db
+	if strings.HasPrefix(path, "logr://") {
+		return "logr", strings.TrimPrefix(path, "logr://")
+	}
+
+	// file://path/to/file.db
+	if strings.HasPrefix(path, "file://") {
+		return "file", strings.TrimPrefix(path, "file://")
+	}
+
+	return "file", path
+
+}
+
+func (db *DB) syncer(path string) (syncr.Syncable, error) {
+
+	if db.kind == "s3" {
 		return s3.New(path, &s3.Options{
 			MinSize: 5,
 		})
 	}
 
-	// gcs://bucket/path/to/file.db
-	if strings.HasPrefix(path, "gcs://") {
-		path = strings.TrimPrefix(path, "gcs://")
+	if db.kind == "gcs" {
 		return gcs.New(path, &gcs.Options{
 			MinSize: 5,
 		})
 	}
 
-	// logr://path/to/folder/with/file.db
-	if strings.HasPrefix(path, "logr://") {
-		path = strings.TrimPrefix(path, "logr://")
+	if db.kind == "logr" {
 		return logr.New(path, &logr.Options{
 			MaxSize: 5,
 		})
 	}
 
-	// file://path/to/file.db
-	if strings.HasPrefix(path, "file://") {
-		path = strings.TrimPrefix(path, "file://")
+	if db.kind == "file" {
 		return file.New(path)
 	}
 
-	// /path/to/file.db
-	return file.New(path)
+	return nil, nil
 
 }
