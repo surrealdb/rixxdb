@@ -420,8 +420,6 @@ func (db *DB) Close() error {
 		return ErrDbClosed
 	}
 
-	db.path = ""
-
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -441,7 +439,7 @@ func (db *DB) Close() error {
 		db.tick.shrk = nil
 	}
 
-	defer func() { db.tree, db.open = nil, false }()
+	defer func() { db.tree, db.path, db.open = nil, "", false }()
 
 	if db.buff.pntr != nil {
 		defer func() { db.buff.pntr = nil }()
