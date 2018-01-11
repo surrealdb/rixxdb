@@ -143,6 +143,7 @@ func (db *DB) sync() {
 
 		for range db.tick.sync.C {
 			if err := db.Sync(); err != nil {
+				panic(err)
 				break
 			}
 		}
@@ -169,6 +170,7 @@ func (db *DB) shrk() {
 
 		for range db.tick.shrk.C {
 			if err := db.Shrink(); err != nil {
+				panic(err)
 				break
 			}
 		}
