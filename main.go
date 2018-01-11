@@ -23,13 +23,6 @@ const (
 	// this option is specified, all data is kept in memory, and
 	// no the database is run with no durability.
 	SyncNever time.Duration = -1
-	// SyncAlways is used to ensure that the changes to the database
-	// are synced to disk whenever a transaction is committed
-	// successfully. If the process exits, all data is preserved.
-	SyncAlways = 1
-)
-
-const (
 	// ShrinkNever is used to disable shrinking the data file. All
 	// exact changes to the database are preserved with this option
 	// but the data file can grow larger than the data stored.
