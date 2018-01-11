@@ -328,10 +328,17 @@ func (db *DB) Sync() error {
 
 	// Obtain a lock on the buffer to
 	// prevent changes while we flush
-	// the buffer to the file.
+	// the buffer to the sender.
 
 	db.buff.lock.Lock()
 	defer db.buff.lock.Unlock()
+
+	// Obtain a lock on the sender to
+	// prevent changes while we flush
+	// the sender to the file.
+
+	db.send.lock.Lock()
+	defer db.send.lock.Unlock()
 
 	// Obtain a lock on the file to
 	// prevent other threads from
@@ -398,6 +405,13 @@ func (db *DB) Shrink() error {
 		db.wait.shrk = false
 	}()
 
+	// Obtain a lock on the sender to
+	// prevent changes while we link
+	// the send buffer to the file.
+
+	db.send.lock.Lock()
+	defer db.send.lock.Unlock()
+
 	// Obtain a lock on the file to
 	// prevent other threads from
 	// syncing to the file.
@@ -425,6 +439,9 @@ func (db *DB) Close() error {
 
 	db.buff.lock.Lock()
 	defer db.buff.lock.Unlock()
+
+	db.send.lock.Lock()
+	defer db.send.lock.Unlock()
 
 	db.file.lock.Lock()
 	defer db.file.lock.Unlock()
