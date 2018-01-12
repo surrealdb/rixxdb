@@ -82,6 +82,13 @@ func Open(path string, conf *Config) (*DB, error) {
 		tree: unsafe.Pointer(ptree.New()),
 	}
 
+	// Check that the specified size policy is greater than
+	// '0', otherwise the data will not be able to be saved.
+
+	if db.conf.SizePolicy <= 0 {
+		return nil, ErrDbInvalidSizePolicy
+	}
+
 	// Check that if there is an encryption key specified
 	// on DB creation, that the key is of the correct length
 	// for AES-128, AES-192, or AES-256 encryption.

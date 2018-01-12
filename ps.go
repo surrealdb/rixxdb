@@ -54,19 +54,19 @@ func (db *DB) syncer(path string) (syncr.Syncable, error) {
 
 	if db.kind == "s3" {
 		return s3.New(path, &s3.Options{
-			MinSize: 5,
+			MinSize: db.conf.SizePolicy,
 		})
 	}
 
 	if db.kind == "gcs" {
 		return gcs.New(path, &gcs.Options{
-			MinSize: 5,
+			MinSize: db.conf.SizePolicy,
 		})
 	}
 
 	if db.kind == "logr" {
 		return logr.New(path, &logr.Options{
-			MaxSize: 5,
+			MaxSize: db.conf.SizePolicy,
 		})
 	}
 

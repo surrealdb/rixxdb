@@ -39,6 +39,9 @@ var (
 	// ErrDbFileContentsInvalid occurs when the file is invalid or currupted.
 	ErrDbFileContentsInvalid = errors.New("DB file contents invalid")
 
+	// ErrDbInvalidSizePolicy occurs when the provided size policy is invalid.
+	ErrDbInvalidSizePolicy = errors.New("DB file size policy invalid")
+
 	// ErrDbInvalidEncryptionKey occurs when the provided encryption key is invalid.
 	ErrDbInvalidEncryptionKey = errors.New("DB encryption key invalid")
 )

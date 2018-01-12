@@ -32,6 +32,14 @@ const (
 // Config represents database configuration options. These
 // options are used to change various behaviors of the database.
 type Config struct {
+	// SizePolicy defines what the file size should be when writing to
+	// streaming storage. For local streaming folder storage, the SizePolicy
+	// determines the maximum desired file size before rotation the files,
+	// and continuing with a new file. For remote streaming storage such as
+	// S3 and GCS, the SizePolicy determines the minimum size of the data
+	// to cache, before writing to the remote storage.
+	SizePolicy int
+
 	// SyncPolicy defines how often the data is synced to the append-only
 	// file on disk. '-1' ensures that the database is kept in-memory
 	// with no persistence, '0' ensures that the database is persisted
