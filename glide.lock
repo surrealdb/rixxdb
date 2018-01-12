@@ -1,8 +1,8 @@
 hash: af89ca0d1b5cd5b492f591521216a0596c755af58b8a565a09ab76326b7ca933
-updated: 2017-12-05T01:04:21.311457Z
+updated: 2018-01-12T10:52:45.172198Z
 imports:
 - name: cloud.google.com/go
-  version: 2d3a6656c17a60b0815b7e06ab0be04eacb6e613
+  version: 050b16d2314d5fc3d4c9a51e4cd5c7468e77f162
   subpackages:
   - compute/metadata
   - iam
@@ -15,7 +15,7 @@ imports:
 - name: github.com/abcum/ptree
   version: 474d875024a90dd50bfc66afaf2a35a4447afc44
 - name: github.com/abcum/syncr
-  version: 55c907d89cba69cad2701004ec86119d448c0f92
+  version: 76d86536887a385eff351b1850106badc958db70
   subpackages:
   - file
   - gcs
@@ -24,7 +24,7 @@ imports:
 - name: github.com/abcum/tlist
   version: 6c74cef6e6785964f5984f7ff480148aa5f9e679
 - name: github.com/aws/aws-sdk-go
-  version: 107df09c5f137b9dfe53b7a4c25dd4d79f81390f
+  version: 726cba4d63d34a7055809986b7942c3eae6c4eb2
   subpackages:
   - aws
   - aws/awserr
@@ -69,7 +69,7 @@ imports:
 - name: github.com/jmespath/go-jmespath
   version: dd801d4f4ce7ac746e7e7b4489d2fa600b3b096b
 - name: golang.org/x/net
-  version: a8b9294777976932365dabb6640cf1468d95c70f
+  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
   subpackages:
   - context
   - context/ctxhttp
@@ -80,21 +80,21 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/oauth2
-  version: f95fa95eaa936d9d87489b15d1d18b97c1ba9c28
+  version: 30785a2c434e431ef7c507b54617d6a951d5f2b4
   subpackages:
   - google
   - internal
   - jws
   - jwt
 - name: golang.org/x/text
-  version: 57961680700a5336d15015c8c50686ca5ba362a4
+  version: e19ae1496984b1c655b8044a65c0300a3c878dd3
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/api
-  version: 8cfdc57a0663729cc2811afefb5b7cd3d901e97c
+  version: 37df4fabefb044819e927f44b8487d4cd926d06c
   subpackages:
   - gensupport
   - googleapi
@@ -106,7 +106,7 @@ imports:
   - storage/v1
   - transport/http
 - name: google.golang.org/appengine
-  version: 9d8544a6b2c7df9cff240fcf92d7b2f59bc13416
+  version: 5bee14b453b4c71be47ec1781b0fa61c2ea182db
   subpackages:
   - internal
   - internal/app_identity
@@ -118,15 +118,16 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/genproto
-  version: 7f0da29060c682909f650ad8ed4e515bd74fa12a
+  version: a8101f21cf983e773d0c1133ebc5424792003214
   subpackages:
   - googleapis/api/annotations
   - googleapis/iam/v1
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: be077907e29fdb945d351e4284eb5361e7f8924e
+  version: 1cd234627e6f392ade0527d593eb3fe53e832d4a
   subpackages:
   - balancer
+  - balancer/base
   - balancer/roundrobin
   - codes
   - connectivity
@@ -141,7 +142,6 @@ imports:
   - peer
   - resolver
   - resolver/dns
-  - resolver/manual
   - resolver/passthrough
   - stats
   - status
