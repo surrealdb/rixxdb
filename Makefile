@@ -37,4 +37,4 @@ tests:
 cover:
 	echo 'mode: atomic' > main.cover
 	glide novendor | cut -d '/' -f-2 | xargs -I % sh -c 'touch temp.cover; go test -covermode=count -coverprofile=temp.cover %; tail -n +2 temp.cover >> main.cover; rm temp.cover;'
-	goveralls -coverprofile=./main.cover -service=circle-ci -repotoken=${COVERALLS}
+	goveralls -coverprofile=./main.cover -service=circle-ci -repotoken=${COVERALLS} || echo "Coveralls update failed"
