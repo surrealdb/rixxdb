@@ -515,7 +515,7 @@ func (db *DB) Shrink() error {
 	// type is a stream, then append
 	// the data and mark the shrink.
 
-	if db.kind == "s3" || db.kind == "gcs" || db.kind == "logr" {
+	if db.kind == "logr" {
 
 		var err error
 
