@@ -1,15 +1,15 @@
 hash: f8152662585b7dbad1271de90707c8eddbaf8a6fc2943a8a53b23f79b0bb0a59
-updated: 2018-04-05T08:12:27.439832+01:00
+updated: 2018-04-05T08:44:18.545296+01:00
 imports:
 - name: github.com/abcum/ptree
-  version: 82ea666909f4532fbb547719646ba28f8a31122c
+  version: e5b90ab2c1e2a1b7acf0c922aea0c1e72888154e
 - name: github.com/abcum/syncr
-  version: fa0b16a8a19a126ab051c915dceb293b46528f41
+  version: cfe07cfc618896cf9e07b842310b3cb20159d8c8
   subpackages:
   - file
   - logr
 - name: github.com/abcum/tlist
-  version: ea0673d35e6b4538880043be17e461fa321466c8
+  version: 555faebc1115b203cdb7aac00178d8f59bb4f186
 testImports:
 - name: github.com/gopherjs/gopherjs
   version: 82b322028c96512b15077093b16a5f1c7ea897ac
