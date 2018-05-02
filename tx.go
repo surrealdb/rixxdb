@@ -1271,6 +1271,10 @@ func (tx *TX) inj(r io.Reader) error {
 				return err
 			}
 
+			if len(val) == 0 {
+				val = nil
+			}
+
 			if l := tx.ptree.Get(key); l != nil {
 				l.(*tlist.List).Put(ver, val)
 			} else {
