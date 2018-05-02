@@ -4,9 +4,21 @@ import:
 - package: github.com/abcum/syncr
   subpackages:
   - file
+  - gcs
   - logr
+  - s3
 - package: github.com/abcum/tlist
 testImport:
+- package: cloud.google.com/go
+  version: ^0.21.0
+  subpackages:
+  - storage
+- package: github.com/aws/aws-sdk-go
+  version: ^1.13.39
+  subpackages:
+  - aws
+  - aws/session
+  - service/s3
 - package: github.com/smartystreets/goconvey
   version: ^1.6.3
   subpackages:
