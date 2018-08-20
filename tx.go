@@ -183,6 +183,169 @@ func (tx *TX) forced() error {
 
 }
 
+// All retrieves a single key:value item.
+func (tx *TX) All(key []byte) (kvs []*KV, err error) {
+
+	var v []byte
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	if l := tx.ptree.Get(key); l != nil {
+		l.(*tlist.List).Walk(func(i *tlist.Item) bool {
+			if v, err = tx.get(i.Val()); err != nil {
+				return true
+			}
+			kvs = append(kvs, &KV{ver: i.Ver(), key: key, val: v})
+			return false
+		})
+	}
+
+	return
+
+}
+
+// AllL retrieves the range of rows which are prefixed with `key`.
+func (tx *TX) AllL(key []byte, max uint64) (kvs []*KV, err error) {
+
+	var v []byte
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	tx.ptree.Root().Subs(key, func(k []byte, l interface{}) (e bool) {
+		l.(*tlist.List).Walk(func(i *tlist.Item) bool {
+			if v, err = tx.get(i.Val()); err != nil {
+				return true
+			}
+			kvs = append(kvs, &KV{ver: i.Ver(), key: key, val: v})
+			return false
+		})
+		max--
+		return
+	})
+
+	return
+
+}
+
+// AllP retrieves the range of rows which are prefixed with `key`.
+func (tx *TX) AllP(key []byte, max uint64) (kvs []*KV, err error) {
+
+	var v []byte
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if key == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	c := tx.ptree.Cursor()
+
+	for k, l := c.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = c.Next() {
+		l.(*tlist.List).Walk(func(i *tlist.Item) bool {
+			if v, err = tx.get(i.Val()); err != nil {
+				return true
+			}
+			kvs = append(kvs, &KV{ver: i.Ver(), key: key, val: v})
+			return false
+		})
+		max--
+	}
+
+	return
+
+}
+
+// AllR retrieves the range of `max` rows between `beg` (inclusive) and
+// `end` (exclusive). To return the range in descending order, ensure
+// that `end` sorts lower than `beg` in the key value store.
+func (tx *TX) AllR(beg, end []byte, max uint64) (kvs []*KV, err error) {
+
+	var v []byte
+
+	if max == 0 {
+		max = math.MaxUint64
+	}
+
+	if tx.db == nil {
+		return nil, ErrTxClosed
+	}
+
+	if beg == nil || end == nil {
+		return nil, ErrTxKeyCanNotBeNil
+	}
+
+	tx.plock.RLock()
+	defer tx.plock.RUnlock()
+
+	c := tx.ptree.Cursor()
+
+	d := bytes.Compare(beg, end)
+
+	switch {
+
+	case d <= 0:
+
+		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = c.Next() {
+			l.(*tlist.List).Walk(func(i *tlist.Item) bool {
+				if v, err = tx.get(i.Val()); err != nil {
+					return true
+				}
+				kvs = append(kvs, &KV{ver: i.Ver(), key: k, val: v})
+				return false
+			})
+			max--
+		}
+
+	case d >= 1:
+
+		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
+			l.(*tlist.List).Walk(func(i *tlist.Item) bool {
+				if v, err = tx.get(i.Val()); err != nil {
+					return true
+				}
+				kvs = append(kvs, &KV{ver: i.Ver(), key: k, val: v})
+				return false
+			})
+			max--
+		}
+
+	}
+
+	return
+
+}
+
 // Clr removes a single key:value item.
 func (tx *TX) Clr(key []byte) (kv *KV, err error) {
 
