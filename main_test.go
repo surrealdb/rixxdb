@@ -624,16 +624,14 @@ func fullTests(db *DB) {
 		So(kvs[4].Val(), ShouldResemble, []byte("NS"))
 		So(kvs[5].Val(), ShouldResemble, []byte("KV"))
 
-		// FIXME seeking to end key doesn't work
-
-		// kvs, err = tx.GetR(10, []byte("/~"), []byte("/"), 0)
-		// So(kvs, ShouldHaveLength, 6)
-		// So(kvs[0].Val(), ShouldResemble, []byte("KV"))
-		// So(kvs[1].Val(), ShouldResemble, []byte("NS"))
-		// So(kvs[2].Val(), ShouldResemble, []byte("DB"))
-		// So(kvs[3].Val(), ShouldResemble, []byte("TB1"))
-		// So(kvs[4].Val(), ShouldResemble, []byte("TB2"))
-		// So(kvs[5].Val(), ShouldResemble, []byte("TB3"))
+		kvs, err = tx.GetR(10, []byte("/~"), []byte("/"), 0)
+		So(kvs, ShouldHaveLength, 6)
+		So(kvs[0].Val(), ShouldResemble, []byte("TB3"))
+		So(kvs[1].Val(), ShouldResemble, []byte("TB2"))
+		So(kvs[2].Val(), ShouldResemble, []byte("TB1"))
+		So(kvs[3].Val(), ShouldResemble, []byte("DB"))
+		So(kvs[4].Val(), ShouldResemble, []byte("NS"))
+		So(kvs[5].Val(), ShouldResemble, []byte("KV"))
 
 		kvs, err = tx.GetR(10, []byte("/kv/ns/db/tb"), []byte("/kv/ns/db/tb~"), 0)
 		So(kvs, ShouldHaveLength, 3)

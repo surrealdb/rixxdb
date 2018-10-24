@@ -570,7 +570,12 @@ func (tx *TX) ClrR(beg, end []byte, max uint64) (kvs []*KV, err error) {
 
 	case d >= 1:
 
-		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
+		k, l := c.Seek(beg)
+		if k == nil {
+			k, l = c.Last()
+		}
+
+		for ; max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
 			if i := l.(*tlist.List).Max(); i != nil {
 				if v, err = tx.get(i.Val()); err != nil {
 					return nil, err
@@ -732,7 +737,12 @@ func (tx *TX) GetR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err erro
 
 	case d >= 1:
 
-		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
+		k, l := c.Seek(beg)
+		if k == nil {
+			k, l = c.Last()
+		}
+
+		for ; max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
 			if i := l.(*tlist.List).Get(ver, tlist.Upto); i != nil && i.Val() != nil {
 				if v, err = tx.get(i.Val()); err != nil {
 					return nil, err
@@ -977,7 +987,12 @@ func (tx *TX) DelR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err erro
 
 	case d >= 1:
 
-		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
+		k, l := c.Seek(beg)
+		if k == nil {
+			k, l = c.Last()
+		}
+
+		for ; max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
 			if l.(*tlist.List).Get(ver, tlist.Upto) != nil {
 				if i := l.(*tlist.List).Del(ver, tlist.Upto); i != nil {
 					if v, err = tx.get(i.Val()); err != nil {
@@ -1278,7 +1293,12 @@ func (tx *TX) PutR(ver uint64, beg, end, val []byte, max uint64) (kvs []*KV, err
 
 	case d >= 1:
 
-		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
+		k, l := c.Seek(beg)
+		if k == nil {
+			k, l = c.Last()
+		}
+
+		for ; max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
 			if l.(*tlist.List).Get(ver, tlist.Upto) != nil {
 				if i := l.(*tlist.List).Put(ver, val); i != nil {
 					if v, err = tx.get(i.Val()); err != nil {
