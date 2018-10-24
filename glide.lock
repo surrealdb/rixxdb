@@ -1,5 +1,5 @@
 hash: af6ce246d5d2856ff7ad231b1d3fee76e093e5c7fe6d2ad19de86618acb2698f
-updated: 2018-10-24T01:06:37.889663+01:00
+updated: 2018-10-24T10:47:33.385299+01:00
 imports:
 - name: cloud.google.com/go
   version: debcad1964693daf8ef4bc06292d7e828e075130
@@ -14,7 +14,7 @@ imports:
 - name: github.com/abcum/bump
   version: 9074c17d162095b8b5c980f19b54a6e928ec4a1a
 - name: github.com/abcum/ptree
-  version: 7fa43c5232463e3d13faca7ecbb3d05f82bc4fab
+  version: 6e72a70c6993da70827df66d1a13f4223ffc5e07
 - name: github.com/abcum/syncr
   version: bde76fc324fe1a758165e2ea95c8a31d40cbad8d
   subpackages:
@@ -114,7 +114,7 @@ imports:
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 4d1c5fb19474adfe9562c9847ba425e7da817e81
+  version: f21a4dfb5e38f5895301dc265a8def02365cc3d0
   subpackages:
   - secure/bidirule
   - transform
