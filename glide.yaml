@@ -10,11 +10,11 @@ import:
 - package: github.com/abcum/tlist
 testImport:
 - package: cloud.google.com/go
-  version: ^0.21.0
+  version: ^0.31.0
   subpackages:
   - storage
 - package: github.com/aws/aws-sdk-go
-  version: ^1.13.39
+  version: ^1.15.61
   subpackages:
   - aws
   - aws/session
