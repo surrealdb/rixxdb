@@ -15,16 +15,10 @@
 package rixxdb
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"sync"
 	"testing"
-
-	"cloud.google.com/go/storage"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -37,7 +31,7 @@ func TestAll(t *testing.T) {
 	var err error
 
 	Convey("No persistence", t, func() {
-		db, err = Open("memory", &Config{SizePolicy: 5, EncryptionKey: nil})
+		db, err = Open("memory", &Config{EncryptionKey: nil})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		fullTests(db)
@@ -45,7 +39,7 @@ func TestAll(t *testing.T) {
 	})
 
 	Convey("No persistence", t, func() {
-		db, err = Open("memory", &Config{SizePolicy: 5, EncryptionKey: []byte("1234567890123456")})
+		db, err = Open("memory", &Config{EncryptionKey: []byte("1234567890123456")})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		fullTests(db)
@@ -53,18 +47,18 @@ func TestAll(t *testing.T) {
 	})
 
 	Convey("Invalid key", t, func() {
-		db, err = Open("memory", &Config{SizePolicy: 5, EncryptionKey: []byte("12345678901234567890")})
+		db, err = Open("memory", &Config{EncryptionKey: []byte("12345678901234567890")})
 		So(err, ShouldEqual, ErrDbInvalidEncryptionKey)
 	})
 
 	Convey("Path persistence", t, func() {
-		db, err = Open("test.db", &Config{SizePolicy: 5})
+		db, err = Open("test.db", &Config{})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		fullTests(db)
 		So(db.Sync(), ShouldBeNil)
 		So(db.Close(), ShouldBeNil)
-		db, err = Open("test.db", &Config{SizePolicy: 5})
+		db, err = Open("test.db", &Config{})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		So(db.Close(), ShouldBeNil)
@@ -72,91 +66,17 @@ func TestAll(t *testing.T) {
 	})
 
 	Convey("File persistence", t, func() {
-		db, err = Open("file://test.db", &Config{SizePolicy: 5})
+		db, err = Open("file://test.db", &Config{})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		fullTests(db)
 		So(db.Sync(), ShouldBeNil)
 		So(db.Close(), ShouldBeNil)
-		db, err = Open("file://test.db", &Config{SizePolicy: 5})
+		db, err = Open("file://test.db", &Config{})
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 		So(db.Close(), ShouldBeNil)
 		os.RemoveAll("test.db")
-	})
-
-	Convey("Logr persistence", t, func() {
-		db, err = Open("logr://test/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		fullTests(db)
-		So(db.Sync(), ShouldBeNil)
-		So(db.Close(), ShouldBeNil)
-		db, err = Open("logr://test/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		So(db.Close(), ShouldBeNil)
-		os.RemoveAll("test")
-	})
-
-	Convey("AWS persistence", t, func() {
-
-		db, err = Open("s3://abcum-tests/rixxdb/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		fullTests(db)
-		So(db.Sync(), ShouldBeNil)
-		So(db.Close(), ShouldBeNil)
-		db, err = Open("s3://abcum-tests/rixxdb/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		So(db.Close(), ShouldBeNil)
-
-		n := session.Must(session.NewSession())
-		s := s3.New(n, &aws.Config{Region: aws.String("eu-west-1")})
-		s.ListObjectsPages(&s3.ListObjectsInput{
-			Bucket: aws.String("abcum-tests"),
-			Prefix: aws.String("rixxdb/"),
-		}, func(p *s3.ListObjectsOutput, last bool) bool {
-			for _, f := range p.Contents {
-				s.DeleteObject(&s3.DeleteObjectInput{
-					Bucket: aws.String("abcum-tests"),
-					Key:    f.Key,
-				})
-			}
-			return true
-		})
-
-	})
-
-	Convey("GCS persistence", t, func() {
-
-		db, err = Open("gcs://abcum-tests/rixxdb/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		fullTests(db)
-		So(db.Sync(), ShouldBeNil)
-		So(db.Close(), ShouldBeNil)
-		db, err = Open("gcs://abcum-tests/rixxdb/test.db", &Config{SizePolicy: 5})
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-		So(db.Close(), ShouldBeNil)
-
-		x := context.Background()
-		c, e := storage.NewClient(x)
-		if e != nil {
-			panic(e)
-		}
-		b := c.Bucket("abcum-tests")
-		i := b.Objects(x, &storage.Query{Prefix: "rixxdb/"})
-		for {
-			o, e := i.Next()
-			if e != nil {
-				break
-			}
-			b.Object(o.Name).Delete(x)
-		}
-
 	})
 
 }

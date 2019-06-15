@@ -19,14 +19,13 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
 
 	"github.com/abcum/ptree"
-	"github.com/abcum/syncr"
 	"github.com/abcum/tlist"
 )
 
@@ -37,7 +36,7 @@ import (
 // a time, each with its own consistent view of the data as it existed
 // when the transaction started.
 type DB struct {
-	open bool
+	done bool
 	kind string
 	path string
 	conf *Config
@@ -61,11 +60,11 @@ type DB struct {
 	}
 	file struct {
 		lock sync.Mutex
-		pntr syncr.Syncable
+		pntr *os.File
 	}
 	temp struct {
 		lock sync.Mutex
-		pntr syncr.Syncable
+		pntr *os.File
 	}
 }
 
@@ -75,18 +74,11 @@ type DB struct {
 func Open(path string, conf *Config) (*DB, error) {
 
 	db := &DB{
-		open: true,
+		done: false,
 		path: path,
 		conf: conf,
 		kind: "memory",
 		tree: unsafe.Pointer(ptree.New()),
-	}
-
-	// Check that the specified size policy is greater than
-	// '0', otherwise the data will not be able to be saved.
-
-	if db.conf.SizePolicy <= 0 {
-		return nil, ErrDbInvalidSizePolicy
 	}
 
 	// Check that if there is an encryption key specified
@@ -107,9 +99,12 @@ func Open(path string, conf *Config) (*DB, error) {
 
 		var err error
 
-		db.kind, db.path = db.locate(path)
+		db.kind = "file"
 
-		if db.file.pntr, err = db.syncer(db.path); err != nil {
+		db.path = strings.TrimPrefix(db.path, "file://")
+
+		// Open the file at the specified path.
+		if db.file.pntr, err = db.open(db.path); err != nil {
 			return nil, err
 		}
 
@@ -196,8 +191,16 @@ func (db *DB) shrk() {
 
 }
 
+func (db *DB) open(path string) (*os.File, error) {
+
+	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0666)
+
+}
+
 func (db *DB) root() *ptree.Tree {
+
 	return (*ptree.Tree)(atomic.LoadPointer(&db.tree))
+
 }
 
 func (db *DB) push(b []byte) error {
@@ -459,7 +462,7 @@ func (db *DB) Shrink() error {
 		// PUT data to a temporary
 		// file which we will rotate.
 
-		if db.temp.pntr, err = db.syncer(db.path + ".tmp"); err != nil {
+		if db.temp.pntr, err = db.open(db.path + ".tmp"); err != nil {
 			return err
 		}
 
@@ -499,7 +502,7 @@ func (db *DB) Shrink() error {
 		// into the main data file and
 		// obtain a new file reference.
 
-		if db.file.pntr, err = db.syncer(db.path); err != nil {
+		if db.file.pntr, err = db.open(db.path); err != nil {
 			return err
 		}
 
@@ -508,68 +511,6 @@ func (db *DB) Shrink() error {
 		// file reference.
 
 		db.send.pntr = bufio.NewWriter(db.file.pntr)
-
-	}
-
-	// If the current data storage
-	// type is a stream, then append
-	// the data and mark the shrink.
-
-	if db.kind == "s3" || db.kind == "gcs" || db.kind == "logr" {
-
-		var err error
-
-		e := filepath.Ext(db.path)
-		f := db.path[:len(db.path)-len(e)]
-		t := time.Now().UTC().Format("2006-01-02T15-04-05.999999999")
-
-		// Open a new temporary file so
-		// that we can mark the current
-		// shrink time to storage.
-
-		if db.temp.pntr, err = db.syncer(f + "-" + t + ".shrink" + e); err != nil {
-			return err
-		}
-
-		// Write an 'ERASE' marker to
-		// the temporary file so that all
-		// historic writes are ignored.
-
-		if _, err = db.temp.pntr.Write([]byte("E")); err != nil {
-			return err
-		}
-
-		// Sync the temporary file to
-		// the storage immediately so
-		// that the time is recorded.
-
-		if err = db.temp.pntr.Sync(); err != nil {
-			return err
-		}
-
-		// Once we have written the
-		// 'ERASE' marker, we can
-		// close the temporary file.
-
-		if err = db.temp.pntr.Close(); err != nil {
-			return err
-		}
-
-		// Flush the snapshot to the file
-		// and ensure that the file is
-		// synced to storage in the OS.
-
-		if err = db.Save(db.send.pntr); err != nil {
-			return err
-		}
-
-		if err = db.send.pntr.Flush(); err != nil {
-			return err
-		}
-
-		if err = db.file.pntr.Sync(); err != nil {
-			return err
-		}
 
 	}
 
@@ -582,7 +523,7 @@ func (db *DB) Close() error {
 
 	var err error
 
-	if !db.open {
+	if db.done {
 		return ErrDbClosed
 	}
 
@@ -608,7 +549,7 @@ func (db *DB) Close() error {
 		db.tick.shrk = nil
 	}
 
-	defer func() { db.tree, db.path, db.open = nil, "", false }()
+	defer func() { db.tree, db.path, db.done = nil, "", true }()
 
 	if db.buff.pntr != nil {
 		defer func() { db.buff.pntr = nil }()
@@ -641,7 +582,7 @@ func (db *DB) Close() error {
 // to be serialized until the current write transaction finishes.
 func (db *DB) Begin(writeable bool) (*TX, error) {
 
-	if !db.open {
+	if db.done {
 		return nil, ErrDbClosed
 	}
 
