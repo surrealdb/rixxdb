@@ -567,6 +567,9 @@ func (db *DB) Close() error {
 
 	if db.file.pntr != nil {
 		defer func() { db.file.pntr = nil }()
+		if err = db.file.pntr.Sync(); err != nil {
+			return err
+		}
 		if err = db.file.pntr.Close(); err != nil {
 			return err
 		}
