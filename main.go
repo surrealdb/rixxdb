@@ -36,13 +36,13 @@ type Config struct {
 	// file on disk. '-1' ensures that the database is kept in-memory
 	// with no persistence, '0' ensures that the database is persisted
 	// to disk after every commit, and a number greater than 0 ensures
-	// that the database is committed to disk after the specified seconds.
+	// that the database is committed to disk after the specified duration.
 	SyncPolicy time.Duration
 
 	// ShrinkPolicy defines how often the database append-only file is
 	// compacted, removing redundant log entries. '0' ensures that the
 	// database append-only file is never compacted, and a number greater
-	// than 0 ensures the database is compacted after the specified seconds.
+	// than 0 ensures the database is compacted after the specified duration.
 	ShrinkPolicy time.Duration
 
 	// IgnoreSyncPolicyWhenShrinking enables the ability to continue
