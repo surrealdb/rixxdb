@@ -1,4 +1,4 @@
-# Copyright © 2016 Abcum Ltd
+# Copyright © 2019 Abcum Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,16 +21,8 @@ default:
 
 .PHONY: clean
 clean:
-	rm -rf vendor
 	$(GO) clean -i
-	find . -type f \( -name '*.cover' -o -name '*.test' \) -exec rm -f {} \;
 
 .PHONY: tests
 tests:
 	$(GO) test ./...
-
-.PHONY: cover
-cover:
-	echo 'mode: atomic' > main.cover
-	glide novendor | cut -d '/' -f-2 | xargs -I % sh -c 'touch temp.cover; go test -covermode=count -coverprofile=temp.cover %; tail -n +2 temp.cover >> main.cover; rm temp.cover;'
-	goveralls -coverprofile=./main.cover -service=circle-ci -repotoken=${COVERALLS} || echo "Coveralls update failed"

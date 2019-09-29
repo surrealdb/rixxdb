@@ -17,6 +17,3 @@ jobs:
       - run:
           name: Tests
           command: make tests
-      - run:
-          name: Cover
-          command: make cover
