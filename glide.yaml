@@ -1,9 +1,0 @@
-package: github.com/abcum/rixxdb
-import:
-- package: github.com/abcum/ptree
-- package: github.com/abcum/tlist
-testImport:
-- package: github.com/smartystreets/goconvey
-  version: ^1.6.3
-  subpackages:
-  - convey

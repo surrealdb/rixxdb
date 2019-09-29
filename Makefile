@@ -25,10 +25,6 @@ clean:
 	$(GO) clean -i
 	find . -type f \( -name '*.cover' -o -name '*.test' \) -exec rm -f {} \;
 
-.PHONY: setup
-setup:
-	glide install
-
 .PHONY: tests
 tests:
 	$(GO) test ./...
