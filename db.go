@@ -25,8 +25,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/abcum/ptree"
-	"github.com/abcum/tlist"
+	"github.com/abcum/rixxdb/data"
 )
 
 // DB represents a database which operates in memory, and persists to
@@ -78,7 +77,7 @@ func Open(path string, conf *Config) (*DB, error) {
 		path: path,
 		conf: conf,
 		kind: "memory",
-		tree: unsafe.Pointer(ptree.New()),
+		tree: unsafe.Pointer(data.New()),
 	}
 
 	// Check that if there is an encryption key specified
@@ -156,7 +155,6 @@ func (db *DB) sync() {
 		for range db.tick.sync.C {
 			if err := db.Sync(); err != nil {
 				panic(err)
-				break
 			}
 		}
 
@@ -183,7 +181,6 @@ func (db *DB) shrk() {
 		for range db.tick.shrk.C {
 			if err := db.Shrink(); err != nil {
 				panic(err)
-				break
 			}
 		}
 
@@ -197,9 +194,9 @@ func (db *DB) open(path string) (*os.File, error) {
 
 }
 
-func (db *DB) root() *ptree.Tree {
+func (db *DB) root() *data.Tree {
 
-	return (*ptree.Tree)(atomic.LoadPointer(&db.tree))
+	return (*data.Tree)(atomic.LoadPointer(&db.tree))
 
 }
 
@@ -302,11 +299,11 @@ func (db *DB) Save(w io.Writer) error {
 
 	defer tx.Cancel()
 
-	cur := tx.ptree.Cursor()
+	cur := tx.tree.Cursor()
 
 	for k, l := cur.First(); k != nil; k, l = cur.Next() {
 
-		l.(*tlist.List).Walk(func(i *tlist.Item) (e bool) {
+		l.Walk(func(i *data.Item) (e bool) {
 			_, err = w.Write(tx.out(i.Ver(), k, i.Val()))
 			return err != nil
 		})
@@ -594,9 +591,9 @@ func (db *DB) Begin(writeable bool) (*TX, error) {
 	}
 
 	tx := &TX{
-		db:    db,
-		write: writeable,
-		ptree: db.root().Copy(),
+		db:   db,
+		rw:   writeable,
+		tree: db.root().Copy(),
 	}
 
 	return tx, nil
@@ -628,7 +625,7 @@ func (db *DB) View(fn func(*TX) error) error {
 	// so that any outside code can not
 	// manually call Cancel or Commit.
 
-	tx.owned = true
+	tx.fn = true
 
 	// Run the defined transaction in the
 	// scope of the transactions, and
@@ -640,7 +637,7 @@ func (db *DB) View(fn func(*TX) error) error {
 	// so that we can call the Cancel
 	// or Commit methods to finish up.
 
-	tx.owned = false
+	tx.fn = false
 
 	// If an error is returned from the
 	// executed function, then clear the
@@ -683,7 +680,7 @@ func (db *DB) Update(fn func(*TX) error) error {
 	// so that any outside code can not
 	// manually call Cancel or Commit.
 
-	tx.owned = true
+	tx.fn = true
 
 	// Run the defined transaction in the
 	// scope of the transactions, and
@@ -695,7 +692,7 @@ func (db *DB) Update(fn func(*TX) error) error {
 	// so that we can call the Cancel
 	// or Commit methods to finish up.
 
-	tx.owned = false
+	tx.fn = false
 
 	// If an error is returned from the
 	// executed function, then clear the
