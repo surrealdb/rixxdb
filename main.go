@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	// SyncNever is used to prevent syncing of data to disk. When
+	// FlushNever is used to prevent syncing of data to disk. When
 	// this option is specified, all data is kept in memory, and
 	// no the database is run with no durability.
-	SyncNever time.Duration = -1
+	FlushNever time.Duration = -1
 	// ShrinkNever is used to disable shrinking the data file. All
 	// exact changes to the database are preserved with this option
 	// but the data file can grow larger than the data stored.
@@ -32,12 +32,21 @@ const (
 // Config represents database configuration options. These
 // options are used to change various behaviors of the database.
 type Config struct {
-	// SyncPolicy defines how often the data is synced to the append-only
+	// SyncWrites specifies whether the file system should be forced to
+	// flush it's buffers to disk using 'fsync'. When the go programme
+	// exits, the operating system will eventually write the file changes
+	// to disk. Setting SyncWrites to 'true' will guarantee that data is
+	// flushed to persistent disk even if the system is powered down or
+	// the operating system crashes. This is only used when transactions
+	// are set to save to disk on commit by setting FlushPolicy to '0'.
+	SyncWrites bool
+
+	// FlushPolicy defines how often the data is synced to the append-only
 	// file on disk. '-1' ensures that the database is kept in-memory
 	// with no persistence, '0' ensures that the database is persisted
 	// to disk after every commit, and a number greater than 0 ensures
 	// that the database is committed to disk after the specified duration.
-	SyncPolicy time.Duration
+	FlushPolicy time.Duration
 
 	// ShrinkPolicy defines how often the database append-only file is
 	// compacted, removing redundant log entries. '0' ensures that the
@@ -45,7 +54,7 @@ type Config struct {
 	// than 0 ensures the database is compacted after the specified duration.
 	ShrinkPolicy time.Duration
 
-	// IgnoreSyncPolicyWhenShrinking enables the ability to continue
+	// IgnorePolicyWhenShrinking enables the ability to continue
 	// accepting writes to the database, at the same time as a database
 	// shrink is being processed. If this is false, then a write
 	// transaction which is set to persist on each commit, will wait for
@@ -53,7 +62,7 @@ type Config struct {
 	// transaction will write to a buffer which will be synced to the disk
 	// when the shrinking process has finished, and the transaction will
 	// commit successfully without writing to disk immediately.
-	IgnoreSyncPolicyWhenShrinking bool
+	IgnorePolicyWhenShrinking bool
 
 	// EncryptionKey enables the ability to specify an encryption key
 	// to be used when storing the input data in the underlying data tree.

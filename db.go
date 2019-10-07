@@ -42,12 +42,10 @@ type DB struct {
 	lock sync.Mutex
 	tree unsafe.Pointer
 	wait struct {
-		sync bool
-		shrk bool
+		flush, shrink bool
 	}
 	tick struct {
-		sync *time.Ticker
-		shrk *time.Ticker
+		flush, shrink *time.Ticker
 	}
 	buff struct {
 		lock sync.Mutex
@@ -129,31 +127,31 @@ func Open(path string, conf *Config) (*DB, error) {
 
 	}
 
-	go db.sync()
-	go db.shrk()
+	go db.flush()
+	go db.shrnk()
 
 	return db, nil
 
 }
 
-func (db *DB) sync() {
+func (db *DB) flush() {
 
 	if db.file.pntr == nil {
 		return
 	}
 
-	if db.conf.SyncPolicy < 0 {
+	if db.conf.FlushPolicy < 0 {
 		return
 	}
 
-	if db.conf.SyncPolicy > 0 {
+	if db.conf.FlushPolicy > 0 {
 
-		db.tick.sync = time.NewTicker(db.conf.SyncPolicy)
+		db.tick.flush = time.NewTicker(db.conf.FlushPolicy)
 
-		defer db.tick.sync.Stop()
+		defer db.tick.flush.Stop()
 
-		for range db.tick.sync.C {
-			if err := db.Sync(); err != nil {
+		for range db.tick.flush.C {
+			if err := db.Flush(); err != nil {
 				panic(err)
 			}
 		}
@@ -162,7 +160,7 @@ func (db *DB) sync() {
 
 }
 
-func (db *DB) shrk() {
+func (db *DB) shrnk() {
 
 	if db.file.pntr == nil {
 		return
@@ -174,11 +172,11 @@ func (db *DB) shrk() {
 
 	if db.conf.ShrinkPolicy > 0 {
 
-		db.tick.shrk = time.NewTicker(db.conf.ShrinkPolicy)
+		db.tick.shrink = time.NewTicker(db.conf.ShrinkPolicy)
 
-		defer db.tick.shrk.Stop()
+		defer db.tick.shrink.Stop()
 
-		for range db.tick.shrk.C {
+		for range db.tick.shrink.C {
 			if err := db.Shrink(); err != nil {
 				panic(err)
 			}
@@ -210,19 +208,19 @@ func (db *DB) push(b []byte) error {
 		return nil
 	}
 
-	// If the database SyncPolicy has
+	// If the database FlushPolicy has
 	// been disabled, then ignore this
 	// call to sync the data buffer.
 
-	if db.conf.SyncPolicy < 0 {
+	if db.conf.FlushPolicy < 0 {
 		return nil
 	}
 
-	// If the SyncPolicy is specified
+	// If the FlushPolicy is specified
 	// asynchronous, write the data
 	// to the buffer to sync later.
 
-	if db.conf.SyncPolicy >= 0 {
+	if db.conf.FlushPolicy >= 0 {
 
 		db.buff.lock.Lock()
 		defer db.buff.lock.Unlock()
@@ -237,17 +235,17 @@ func (db *DB) push(b []byte) error {
 	// processed, and we can ignore
 	// durability, then don't flush.
 
-	if db.conf.IgnoreSyncPolicyWhenShrinking {
-		if db.wait.sync || db.wait.shrk {
+	if db.conf.IgnorePolicyWhenShrinking {
+		if db.wait.flush || db.wait.shrink {
 			return nil
 		}
 	}
 
-	// If the SyncPolicy is specified
+	// If the FlushPolicy is specified
 	// to sync on every commit, then
 	// ensure the data is synced now.
 
-	if db.conf.SyncPolicy == 0 {
+	if db.conf.FlushPolicy == 0 {
 
 		db.file.lock.Lock()
 		defer db.file.lock.Unlock()
@@ -260,8 +258,12 @@ func (db *DB) push(b []byte) error {
 			return err
 		}
 
-		if err := db.file.pntr.Sync(); err != nil {
-			return err
+		if db.conf.SyncWrites == true {
+
+			if err := db.file.pntr.Sync(); err != nil {
+				return err
+			}
+
 		}
 
 	}
@@ -318,11 +320,11 @@ func (db *DB) Save(w io.Writer) error {
 
 }
 
-// Sync ensures that all database operations are flushed to the
+// Flush ensures that all database operations are flushed to the
 // underlying storage. If the database is currently performing
 // a shrink from a previous call to this method, then the call
 // will be ignored. This does nothing on in-memory databases.
-func (db *DB) Sync() error {
+func (db *DB) Flush() error {
 
 	// If there is no file associated
 	// with this database then ignore
@@ -334,9 +336,9 @@ func (db *DB) Sync() error {
 
 	// If the database is currently
 	// already syncing, then ignore
-	// the sync this time around.
+	// the flush this time around.
 
-	if db.wait.sync {
+	if db.wait.flush {
 		return ErrDbAlreadySyncing
 	}
 
@@ -344,14 +346,14 @@ func (db *DB) Sync() error {
 	// syncing so that other calls
 	// to sync will be ignored.
 
-	db.wait.sync = true
+	db.wait.flush = true
 
 	// Ensure that when this method
 	// is finished we mark that the
 	// database is not syncing.
 
 	defer func() {
-		db.wait.sync = false
+		db.wait.flush = false
 	}()
 
 	// Obtain a lock on the buffer to
@@ -415,7 +417,7 @@ func (db *DB) Shrink() error {
 	// already shrinking, then ignore
 	// the shrink this time around.
 
-	if db.wait.shrk {
+	if db.wait.shrink {
 		return ErrDbAlreadyShrinking
 	}
 
@@ -423,14 +425,14 @@ func (db *DB) Shrink() error {
 	// shrinking so that other calls
 	// to sync will be ignored.
 
-	db.wait.shrk = true
+	db.wait.shrink = true
 
 	// Ensure that when this method
 	// is finished we mark that the
 	// database is not shrinking.
 
 	defer func() {
-		db.wait.shrk = false
+		db.wait.shrink = false
 	}()
 
 	// Obtain a lock on the sender to
@@ -536,14 +538,14 @@ func (db *DB) Close() error {
 	db.file.lock.Lock()
 	defer db.file.lock.Unlock()
 
-	if db.tick.sync != nil {
-		db.tick.sync.Stop()
-		db.tick.sync = nil
+	if db.tick.flush != nil {
+		db.tick.flush.Stop()
+		db.tick.flush = nil
 	}
 
-	if db.tick.shrk != nil {
-		db.tick.shrk.Stop()
-		db.tick.shrk = nil
+	if db.tick.shrink != nil {
+		db.tick.shrink.Stop()
+		db.tick.shrink = nil
 	}
 
 	defer func() { db.tree, db.path, db.done = nil, "", true }()
