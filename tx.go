@@ -372,8 +372,9 @@ func (tx *TX) Clr(key []byte) (kv *KV, err error) {
 			return nil, err
 		}
 		kv.ver, kv.val = i.Ver(), v
-		tx.clr(key)
 	}
+
+	tx.clr(key)
 
 	return
 
@@ -723,8 +724,9 @@ func (tx *TX) Del(ver uint64, key []byte) (kv *KV, err error) {
 			return nil, err
 		}
 		kv.ver, kv.val = i.Ver(), v
-		tx.del(ver, key)
 	}
+
+	tx.del(ver, key)
 
 	return
 
@@ -774,8 +776,9 @@ func (tx *TX) DelC(ver uint64, key, exp []byte) (kv *KV, err error) {
 			return nil, err
 		}
 		kv.ver, kv.val = i.Ver(), v
-		tx.del(ver, key)
 	}
+
+	tx.del(ver, key)
 
 	return
 
@@ -962,8 +965,9 @@ func (tx *TX) Put(ver uint64, key, val []byte) (kv *KV, err error) {
 			return nil, err
 		}
 		kv.ver, kv.val = i.Ver(), v
-		tx.put(ver, key, val)
 	}
+
+	tx.put(ver, key, val)
 
 	return
 
@@ -1018,8 +1022,9 @@ func (tx *TX) PutC(ver uint64, key, val, exp []byte) (kv *KV, err error) {
 			return nil, err
 		}
 		kv.ver, kv.val = i.Ver(), v
-		tx.put(ver, key, val)
 	}
+
+	tx.put(ver, key, val)
 
 	return
 
