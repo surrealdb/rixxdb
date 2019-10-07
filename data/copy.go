@@ -175,14 +175,7 @@ func (c *Copy) put(p, n *Node, t uint64, s, k, v []byte) (*Node, *leaf, *Item) {
 			d.leaf = &leaf{key: k, val: new(List)}
 		}
 
-		// Get the old value
-		// o := n.leaf.val.Get(t, Upto)
-
-		// Update the leaf value
-		// d.leaf.val.Put(t, v)
-
 		// Return the new node and leaf node
-		// return d, n.leaf, o
 		return d, n.leaf, d.leaf.val.Put(t, v)
 
 	}
