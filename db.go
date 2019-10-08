@@ -188,7 +188,7 @@ func (db *DB) shrnk() {
 
 func (db *DB) open(path string) (*os.File, error) {
 
-	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0666)
+	return os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 
 }
 
