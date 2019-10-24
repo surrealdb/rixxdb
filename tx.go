@@ -34,7 +34,7 @@ type TX struct {
 	db   *DB
 	rw   bool
 	fn   bool
-	mem  []byte
+	ops  []*op
 	tree *data.Copy
 	lock sync.RWMutex
 }
@@ -71,7 +71,7 @@ func (tx *TX) Commit() error {
 func (tx *TX) cancel() error {
 
 	defer func() {
-		tx.db, tx.mem, tx.tree = nil, nil, nil
+		tx.db, tx.ops, tx.tree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -82,13 +82,19 @@ func (tx *TX) cancel() error {
 		return ErrTxClosed
 	}
 
+	// If this transaction is not a
+	// writable transaction then we can
+	// cancell immediately without error.
+
+	if tx.rw == false {
+		return nil
+	}
+
 	// If this transaction is writable
 	// then unlock the mutex so other
 	// write transactions can be created.
 
-	if tx.rw {
-		defer tx.db.lock.Unlock()
-	}
+	tx.db.lock.Unlock()
 
 	return nil
 
@@ -97,7 +103,7 @@ func (tx *TX) cancel() error {
 func (tx *TX) commit() error {
 
 	defer func() {
-		tx.db, tx.mem, tx.tree = nil, nil, nil
+		tx.db, tx.ops, tx.tree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -108,27 +114,25 @@ func (tx *TX) commit() error {
 		return ErrTxClosed
 	}
 
-	// If this transaction is writable
-	// then unlock the mutex so other
-	// write transactions can be created.
-
-	if tx.rw {
-		defer tx.db.lock.Unlock()
-	}
-
 	// If this transaction is not a
 	// writable transaction then we can
 	// not commit, so return an error.
 
-	if !tx.rw {
+	if tx.rw == false {
 		return ErrTxNotWritable
 	}
 
-	// Write the transaction alteration
-	// buffer to the file or rollback the
-	// transaction if there is an error.
+	// If this transaction is writable
+	// then unlock the mutex so other
+	// write transactions can be created.
 
-	if err := tx.db.push(tx.mem); err != nil {
+	defer tx.db.lock.Unlock()
+
+	// Pass the transaction operations
+	// to the database so that it can
+	// write them to persistent storage.
+
+	if err := tx.db.push(tx.ops); err != nil {
 		return err
 	}
 
@@ -145,7 +149,7 @@ func (tx *TX) commit() error {
 func (tx *TX) forced() error {
 
 	defer func() {
-		tx.db, tx.mem, tx.tree = nil, nil, nil
+		tx.db, tx.ops, tx.tree = nil, nil, nil
 	}()
 
 	// If this transaction no longer has
@@ -156,21 +160,19 @@ func (tx *TX) forced() error {
 		return ErrTxClosed
 	}
 
-	// If this transaction is writable
-	// then unlock the mutex so other
-	// write transactions can be created.
-
-	if tx.rw {
-		defer tx.db.lock.Unlock()
-	}
-
 	// If this transaction is not a
 	// writable transaction then we can
 	// not commit, so return an error.
 
-	if !tx.rw {
+	if tx.rw == false {
 		return ErrTxNotWritable
 	}
+
+	// If this transaction is writable
+	// then unlock the mutex so other
+	// write transactions can be created.
+
+	defer tx.db.lock.Unlock()
 
 	// If the transaction successfully
 	// synced with the database file
@@ -1214,13 +1216,9 @@ func (tx *TX) put(ver uint64, key, val []byte) {
 		return
 	}
 
-	tx.mem = append(tx.mem, 'P')
-	tx.mem = append(tx.mem, wver(ver)...)
-	tx.mem = append(tx.mem, wlen(key)...)
-	tx.mem = append(tx.mem, key...)
-	tx.mem = append(tx.mem, wlen(val)...)
-	tx.mem = append(tx.mem, val...)
-	tx.mem = append(tx.mem, '\n')
+	tx.ops = append(tx.ops, &op{
+		op: put, ver: ver, key: key, val: val,
+	})
 
 }
 
@@ -1230,11 +1228,9 @@ func (tx *TX) del(ver uint64, key []byte) {
 		return
 	}
 
-	tx.mem = append(tx.mem, 'D')
-	tx.mem = append(tx.mem, wver(ver)...)
-	tx.mem = append(tx.mem, wlen(key)...)
-	tx.mem = append(tx.mem, key...)
-	tx.mem = append(tx.mem, '\n')
+	tx.ops = append(tx.ops, &op{
+		op: del, ver: ver, key: key,
+	})
 
 }
 
@@ -1244,10 +1240,9 @@ func (tx *TX) clr(key []byte) {
 		return
 	}
 
-	tx.mem = append(tx.mem, 'C')
-	tx.mem = append(tx.mem, wlen(key)...)
-	tx.mem = append(tx.mem, key...)
-	tx.mem = append(tx.mem, '\n')
+	tx.ops = append(tx.ops, &op{
+		op: clr, key: key,
+	})
 
 }
 

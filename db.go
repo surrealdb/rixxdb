@@ -15,7 +15,6 @@
 package rixxdb
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -27,6 +26,8 @@ import (
 
 	"github.com/abcum/rixxdb/data"
 )
+
+var buf = bytes.NewBuffer(nil)
 
 // DB represents a database which operates in memory, and persists to
 // disk. A DB is safe to use from multiple goroutines concurrently. A
@@ -50,10 +51,6 @@ type DB struct {
 	buff struct {
 		lock sync.Mutex
 		pntr *bytes.Buffer
-	}
-	send struct {
-		lock sync.Mutex
-		pntr *bufio.Writer
 	}
 	file struct {
 		lock sync.Mutex
@@ -100,6 +97,9 @@ func Open(path string, conf *Config) (*DB, error) {
 
 		db.path = strings.TrimPrefix(db.path, "file://")
 
+		// Create an empty buffer for writes
+		db.buff.pntr = bytes.NewBuffer(nil)
+
 		// Open the file at the specified path.
 		if db.file.pntr, err = db.open(db.path); err != nil {
 			return nil, err
@@ -121,9 +121,6 @@ func Open(path string, conf *Config) (*DB, error) {
 			db.file.pntr.Close()
 			return nil, err
 		}
-
-		db.buff.pntr = bytes.NewBuffer(nil)
-		db.send.pntr = bufio.NewWriter(db.file.pntr)
 
 	}
 
@@ -198,7 +195,7 @@ func (db *DB) root() *data.Tree {
 
 }
 
-func (db *DB) push(b []byte) error {
+func (db *DB) push(ops []*op) error {
 
 	// If there is no file associated
 	// with this database then ignore
@@ -216,29 +213,53 @@ func (db *DB) push(b []byte) error {
 		return nil
 	}
 
+	// Reset the transaction buffer so
+	// that the next transaction can
+	// use it without reallocating.
+
+	defer buf.Reset()
+
+	// Build the transaction alteration
+	// buffer to memory so we can write
+	// it to the file in one operation.
+
+	for _, op := range ops {
+		switch op.op {
+		case clr:
+			buf.WriteRune('C')
+			buf.Write(wlen(op.key))
+			buf.Write(op.key)
+			buf.WriteRune('\n')
+		case del:
+			buf.WriteRune('D')
+			buf.Write(wver(op.ver))
+			buf.Write(wlen(op.key))
+			buf.Write(op.key)
+			buf.WriteRune('\n')
+		case put:
+			buf.WriteRune('P')
+			buf.Write(wver(op.ver))
+			buf.Write(wlen(op.key))
+			buf.Write(op.key)
+			buf.Write(wlen(op.val))
+			buf.Write(op.val)
+			buf.WriteRune('\n')
+		}
+	}
+
 	// If the FlushPolicy is specified
 	// asynchronous, write the data
 	// to the buffer to sync later.
 
-	if db.conf.FlushPolicy >= 0 {
+	if db.conf.FlushPolicy != 0 {
 
 		db.buff.lock.Lock()
 		defer db.buff.lock.Unlock()
 
-		if _, err := db.buff.pntr.Write(b); err != nil {
+		if _, err := db.buff.pntr.Write(buf.Bytes()); err != nil {
 			return err
 		}
 
-	}
-
-	// If a job is currently being
-	// processed, and we can ignore
-	// durability, then don't flush.
-
-	if db.conf.IgnorePolicyWhenShrinking {
-		if db.wait.flush || db.wait.shrink {
-			return nil
-		}
 	}
 
 	// If the FlushPolicy is specified
@@ -250,20 +271,14 @@ func (db *DB) push(b []byte) error {
 		db.file.lock.Lock()
 		defer db.file.lock.Unlock()
 
-		if _, err := db.buff.pntr.WriteTo(db.send.pntr); err != nil {
-			return err
-		}
-
-		if err := db.send.pntr.Flush(); err != nil {
+		if _, err := db.file.pntr.Write(buf.Bytes()); err != nil {
 			return err
 		}
 
 		if db.conf.SyncWrites == true {
-
 			if err := db.file.pntr.Sync(); err != nil {
 				return err
 			}
-
 		}
 
 	}
@@ -363,13 +378,6 @@ func (db *DB) Flush() error {
 	db.buff.lock.Lock()
 	defer db.buff.lock.Unlock()
 
-	// Obtain a lock on the sender to
-	// prevent changes while we flush
-	// the sender to the file.
-
-	db.send.lock.Lock()
-	defer db.send.lock.Unlock()
-
 	// Obtain a lock on the file to
 	// prevent other threads from
 	// syncing to the file.
@@ -381,11 +389,7 @@ func (db *DB) Flush() error {
 	// and ensure that the file is
 	// synced to storage in the OS.
 
-	if _, err := db.buff.pntr.WriteTo(db.send.pntr); err != nil {
-		return err
-	}
-
-	if err := db.send.pntr.Flush(); err != nil {
+	if _, err := db.buff.pntr.WriteTo(db.file.pntr); err != nil {
 		return err
 	}
 
@@ -434,13 +438,6 @@ func (db *DB) Shrink() error {
 	defer func() {
 		db.wait.shrink = false
 	}()
-
-	// Obtain a lock on the sender to
-	// prevent changes while we link
-	// the send buffer to the file.
-
-	db.send.lock.Lock()
-	defer db.send.lock.Unlock()
 
 	// Obtain a lock on the file to
 	// prevent other threads from
@@ -505,12 +502,6 @@ func (db *DB) Shrink() error {
 			return err
 		}
 
-		// Reinitialise the send buffer
-		// to flush to the new data
-		// file reference.
-
-		db.send.pntr = bufio.NewWriter(db.file.pntr)
-
 	}
 
 	return nil
@@ -532,9 +523,6 @@ func (db *DB) Close() error {
 	db.buff.lock.Lock()
 	defer db.buff.lock.Unlock()
 
-	db.send.lock.Lock()
-	defer db.send.lock.Unlock()
-
 	db.file.lock.Lock()
 	defer db.file.lock.Unlock()
 
@@ -552,23 +540,21 @@ func (db *DB) Close() error {
 
 	if db.buff.pntr != nil {
 		defer func() { db.buff.pntr = nil }()
-		if _, err = db.buff.pntr.WriteTo(db.send.pntr); err != nil {
-			return err
-		}
-	}
-
-	if db.send.pntr != nil {
-		defer func() { db.send.pntr = nil }()
-		if err = db.send.pntr.Flush(); err != nil {
+		if _, err = db.buff.pntr.WriteTo(db.file.pntr); err != nil {
 			return err
 		}
 	}
 
 	if db.file.pntr != nil {
-		defer func() { db.file.pntr = nil }()
-		if err = db.file.pntr.Sync(); err != nil {
-			return err
+		if db.conf.SyncWrites == true {
+			if err = db.file.pntr.Sync(); err != nil {
+				return err
+			}
 		}
+	}
+
+	if db.file.pntr != nil {
+		defer func() { db.file.pntr = nil }()
 		if err = db.file.pntr.Close(); err != nil {
 			return err
 		}

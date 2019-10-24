@@ -20,8 +20,8 @@ import (
 
 const (
 	// FlushNever is used to prevent syncing of data to disk. When
-	// this option is specified, all data is kept in memory, and
-	// no the database is run with no durability.
+	// this option is specified, all data changes are kept in memory,
+	// and the database is run with no durability.
 	FlushNever time.Duration = -1
 	// ShrinkNever is used to disable shrinking the data file. All
 	// exact changes to the database are preserved with this option
@@ -53,16 +53,6 @@ type Config struct {
 	// database append-only file is never compacted, and a number greater
 	// than 0 ensures the database is compacted after the specified duration.
 	ShrinkPolicy time.Duration
-
-	// IgnorePolicyWhenShrinking enables the ability to continue
-	// accepting writes to the database, at the same time as a database
-	// shrink is being processed. If this is false, then a write
-	// transaction which is set to persist on each commit, will wait for
-	// the database to finish the shrink process. If this is true, then the
-	// transaction will write to a buffer which will be synced to the disk
-	// when the shrinking process has finished, and the transaction will
-	// commit successfully without writing to disk immediately.
-	IgnorePolicyWhenShrinking bool
 
 	// EncryptionKey enables the ability to specify an encryption key
 	// to be used when storing the input data in the underlying data tree.
