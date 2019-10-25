@@ -618,13 +618,13 @@ func TestIterate(t *testing.T) {
 		var k []byte
 		i.Seek([]byte(s[10]))
 		i.Del()
-		k, _ = i.Next()
+		i.Next()
 		i.Del()
-		k, _ = i.Next()
+		i.Next()
 		i.Del()
-		k, _ = i.Next()
+		i.Next()
 		i.Del()
-		k, _ = i.Next()
+		i.Next()
 		i.Del()
 		k, v := i.Next()
 		var t []int

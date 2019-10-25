@@ -290,6 +290,7 @@ func TestTransactions(t *testing.T) {
 		var err error
 
 		db, err = Open("memory", &Config{})
+		So(err, ShouldBeNil)
 
 		tx, err = db.Begin(true)
 		So(err, ShouldBeNil)
@@ -336,6 +337,7 @@ func TestTransactions(t *testing.T) {
 		var err error
 
 		db, err = Open("memory", &Config{})
+		So(err, ShouldBeNil)
 
 		tx, err = db.Begin(true)
 		So(err, ShouldBeNil)
@@ -386,6 +388,7 @@ func TestTransactions(t *testing.T) {
 		var max = 100
 
 		db, err = Open("memory", &Config{})
+		So(err, ShouldBeNil)
 
 		tx, err = db.Begin(true)
 		So(err, ShouldBeNil)

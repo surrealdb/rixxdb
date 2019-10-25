@@ -46,7 +46,7 @@ func (c *Copy) Cursor() *Cursor {
 	return &Cursor{tree: c}
 }
 
-// Get is used to retrieve a specific key, returning the current value.
+// All is used to retrieve a specific key, returning all list values.
 func (c *Copy) All(key []byte) *List {
 	return c.root.get(key)
 }
