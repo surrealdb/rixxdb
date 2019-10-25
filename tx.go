@@ -1306,7 +1306,7 @@ func (tx *TX) inj(r io.Reader) error {
 				return err
 			}
 
-			tx.tree.Get(ver, key)
+			tx.tree.Del(ver, key)
 
 			continue
 
