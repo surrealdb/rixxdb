@@ -143,6 +143,12 @@ func wlen(v []byte) (bit []byte) {
 	return
 }
 
+func rbit(r *bufio.Reader) (byte, error) {
+
+	return r.ReadByte()
+
+}
+
 func rint(b *bufio.Reader) (uint64, error) {
 
 	v := make([]byte, 8)

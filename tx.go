@@ -1262,7 +1262,7 @@ func (tx *TX) out(ver uint64, key, val []byte) (out []byte) {
 
 func (tx *TX) inj(r io.Reader) error {
 
-	buf := bufio.NewReaderSize(r, 1*1024*1024)
+	b := bufio.NewReaderSize(r, 100*1024*1024)
 
 	for {
 
@@ -1272,7 +1272,7 @@ func (tx *TX) inj(r io.Reader) error {
 		var key []byte
 		var val []byte
 
-		if bit, err = buf.ReadByte(); err == io.EOF {
+		if bit, err = rbit(b); err == io.EOF {
 			break
 		}
 
@@ -1289,7 +1289,7 @@ func (tx *TX) inj(r io.Reader) error {
 
 		case 'C':
 
-			if key, err = rkey(buf); err != nil {
+			if key, err = rkey(b); err != nil {
 				return err
 			}
 
@@ -1299,10 +1299,10 @@ func (tx *TX) inj(r io.Reader) error {
 
 		case 'D':
 
-			if ver, err = rint(buf); err != nil {
+			if ver, err = rint(b); err != nil {
 				return err
 			}
-			if key, err = rkey(buf); err != nil {
+			if key, err = rkey(b); err != nil {
 				return err
 			}
 
@@ -1312,13 +1312,13 @@ func (tx *TX) inj(r io.Reader) error {
 
 		case 'P':
 
-			if ver, err = rint(buf); err != nil {
+			if ver, err = rint(b); err != nil {
 				return err
 			}
-			if key, err = rkey(buf); err != nil {
+			if key, err = rkey(b); err != nil {
 				return err
 			}
-			if val, err = rval(buf); err != nil {
+			if val, err = rval(b); err != nil {
 				return err
 			}
 
