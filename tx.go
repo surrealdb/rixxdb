@@ -75,7 +75,7 @@ func (tx *TX) cancel() error {
 	}()
 
 	// If this transaction no longer has
-	// a vtree then it has already been
+	// a tree then it has already been
 	// closed, so return an error.
 
 	if tx.db == nil {
@@ -107,7 +107,7 @@ func (tx *TX) commit() error {
 	}()
 
 	// If this transaction no longer has
-	// a vtree then it has already been
+	// a tree then it has already been
 	// closed, so return an error.
 
 	if tx.db == nil {
@@ -138,7 +138,7 @@ func (tx *TX) commit() error {
 
 	// If the transaction successfully
 	// synced with the database file
-	// thenn swap in the new vtree.
+	// thenn swap in the new tree.
 
 	atomic.StorePointer(&tx.db.tree, unsafe.Pointer(tx.tree.Tree()))
 
@@ -153,7 +153,7 @@ func (tx *TX) forced() error {
 	}()
 
 	// If this transaction no longer has
-	// a vtree then it has already been
+	// a tree then it has already been
 	// closed, so return an error.
 
 	if tx.db == nil {
@@ -176,7 +176,7 @@ func (tx *TX) forced() error {
 
 	// If the transaction successfully
 	// synced with the database file
-	// then swap in the new vtree.
+	// then swap in the new tree.
 
 	atomic.StorePointer(&tx.db.tree, unsafe.Pointer(tx.tree.Tree()))
 
