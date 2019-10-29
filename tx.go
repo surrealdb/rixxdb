@@ -449,7 +449,7 @@ func (tx *TX) ClrP(key []byte, max uint64) (kvs []*KV, err error) {
 
 	c := tx.tree.Cursor()
 
-	for k, l := c.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = c.Next() {
+	for k, l := c.Seek(key); max > 0 && k != nil && bytes.HasPrefix(k, key); k, l = c.Next() {
 		if i := l.Max(); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return nil, err
@@ -622,7 +622,7 @@ func (tx *TX) GetP(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
 
 	c := tx.tree.Cursor()
 
-	for k, l := c.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = c.Next() {
+	for k, l := c.Seek(key); max > 0 && k != nil && bytes.HasPrefix(k, key); k, l = c.Next() {
 		if i := l.Get(ver, data.Upto); i != nil && i.Val() != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return nil, err
@@ -852,7 +852,7 @@ func (tx *TX) DelP(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
 
 	c := tx.tree.Cursor()
 
-	for k, l := c.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = c.Next() {
+	for k, l := c.Seek(key); max > 0 && k != nil && bytes.HasPrefix(k, key); k, l = c.Next() {
 		if i := l.Put(ver, nil); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return nil, err
@@ -1106,7 +1106,7 @@ func (tx *TX) PutP(ver uint64, key, val []byte, max uint64) (kvs []*KV, err erro
 
 	c := tx.tree.Cursor()
 
-	for k, l := c.Seek(key); max > 0 && bytes.HasPrefix(k, key); k, l = c.Next() {
+	for k, l := c.Seek(key); max > 0 && k != nil && bytes.HasPrefix(k, key); k, l = c.Next() {
 		if i := l.Put(ver, val); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return nil, err
