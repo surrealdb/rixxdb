@@ -27,8 +27,6 @@ import (
 	"github.com/abcum/rixxdb/data"
 )
 
-var buf = bytes.NewBuffer(nil)
-
 // DB represents a database which operates in memory, and persists to
 // disk. A DB is safe to use from multiple goroutines concurrently. A
 // DB can have only one read-write transaction open at a time, but
@@ -48,6 +46,10 @@ type DB struct {
 	tick struct {
 		flush, shrink *time.Ticker
 	}
+	temp struct {
+		lock sync.Mutex
+		pntr *bytes.Buffer
+	}
 	buff struct {
 		lock sync.Mutex
 		pntr *bytes.Buffer
@@ -56,7 +58,7 @@ type DB struct {
 		lock sync.Mutex
 		pntr *os.File
 	}
-	temp struct {
+	shrk struct {
 		lock sync.Mutex
 		pntr *os.File
 	}
@@ -97,7 +99,10 @@ func Open(path string, conf *Config) (*DB, error) {
 
 		db.path = strings.TrimPrefix(db.path, "file://")
 
-		// Create an empty buffer for writes
+		// Create a buffer for txn writes
+		db.temp.pntr = bytes.NewBuffer(nil)
+
+		// Create a buffer for async writes
 		db.buff.pntr = bytes.NewBuffer(nil)
 
 		// Open the file at the specified path.
@@ -217,7 +222,7 @@ func (db *DB) push(ops []*op) error {
 	// that the next transaction can
 	// use it without reallocating.
 
-	defer buf.Reset()
+	defer db.temp.pntr.Reset()
 
 	// Build the transaction alteration
 	// buffer to memory so we can write
@@ -226,24 +231,24 @@ func (db *DB) push(ops []*op) error {
 	for _, op := range ops {
 		switch op.op {
 		case clr:
-			buf.WriteRune('C')
-			buf.Write(wlen(op.key))
-			buf.Write(op.key)
-			buf.WriteRune('\n')
+			db.temp.pntr.WriteRune('C')
+			db.temp.pntr.Write(wlen(op.key))
+			db.temp.pntr.Write(op.key)
+			db.temp.pntr.WriteRune('\n')
 		case del:
-			buf.WriteRune('D')
-			buf.Write(wver(op.ver))
-			buf.Write(wlen(op.key))
-			buf.Write(op.key)
-			buf.WriteRune('\n')
+			db.temp.pntr.WriteRune('D')
+			db.temp.pntr.Write(wver(op.ver))
+			db.temp.pntr.Write(wlen(op.key))
+			db.temp.pntr.Write(op.key)
+			db.temp.pntr.WriteRune('\n')
 		case put:
-			buf.WriteRune('P')
-			buf.Write(wver(op.ver))
-			buf.Write(wlen(op.key))
-			buf.Write(op.key)
-			buf.Write(wlen(op.val))
-			buf.Write(op.val)
-			buf.WriteRune('\n')
+			db.temp.pntr.WriteRune('P')
+			db.temp.pntr.Write(wver(op.ver))
+			db.temp.pntr.Write(wlen(op.key))
+			db.temp.pntr.Write(op.key)
+			db.temp.pntr.Write(wlen(op.val))
+			db.temp.pntr.Write(op.val)
+			db.temp.pntr.WriteRune('\n')
 		}
 	}
 
@@ -256,7 +261,7 @@ func (db *DB) push(ops []*op) error {
 		db.buff.lock.Lock()
 		defer db.buff.lock.Unlock()
 
-		if _, err := db.buff.pntr.Write(buf.Bytes()); err != nil {
+		if _, err := db.buff.pntr.Write(db.temp.pntr.Bytes()); err != nil {
 			return err
 		}
 
@@ -271,7 +276,7 @@ func (db *DB) push(ops []*op) error {
 		db.file.lock.Lock()
 		defer db.file.lock.Unlock()
 
-		if _, err := db.file.pntr.Write(buf.Bytes()); err != nil {
+		if _, err := db.file.pntr.Write(db.temp.pntr.Bytes()); err != nil {
 			return err
 		}
 
@@ -458,7 +463,7 @@ func (db *DB) Shrink() error {
 		// PUT data to a temporary
 		// file which we will rotate.
 
-		if db.temp.pntr, err = db.open(db.path + ".tmp"); err != nil {
+		if db.shrk.pntr, err = db.open(db.path + ".tmp"); err != nil {
 			return err
 		}
 
@@ -466,7 +471,7 @@ func (db *DB) Shrink() error {
 		// all of the database content
 		// to the temporary file.
 
-		if err = db.Save(db.temp.pntr); err != nil {
+		if err = db.Save(db.shrk.pntr); err != nil {
 			return err
 		}
 
@@ -474,7 +479,7 @@ func (db *DB) Shrink() error {
 		// pointer as we have written
 		// the snapshot data to it.
 
-		if err = db.temp.pntr.Close(); err != nil {
+		if err = db.shrk.pntr.Close(); err != nil {
 			return err
 		}
 
@@ -537,6 +542,11 @@ func (db *DB) Close() error {
 	}
 
 	defer func() { db.tree, db.path, db.done = nil, "", true }()
+
+	if db.temp.pntr != nil {
+		defer func() { db.temp.pntr = nil }()
+		db.temp.pntr.Reset()
+	}
 
 	if db.buff.pntr != nil {
 		defer func() { db.buff.pntr = nil }()
