@@ -27,12 +27,8 @@ import (
 type Cursor struct {
 	tree *Copy
 	seek []byte
-	path []*item
-}
-
-type item struct {
-	pos  int
-	node *Node
+	nums []int
+	path []*Node
 }
 
 // Here moves the cursor to the first item in the tree and returns
@@ -64,7 +60,8 @@ func (c *Cursor) Del() ([]byte, *List) {
 // are returned.
 func (c *Cursor) First() ([]byte, *List) {
 
-	c.path = nil
+	c.nums = c.nums[:0]
+	c.path = c.path[:0]
 
 	return c.first(c.tree.root)
 
@@ -75,7 +72,8 @@ func (c *Cursor) First() ([]byte, *List) {
 // returned.
 func (c *Cursor) Last() ([]byte, *List) {
 
-	c.path = nil
+	c.nums = c.nums[:0]
+	c.path = c.path[:0]
 
 	return c.last(c.tree.root)
 
@@ -101,13 +99,14 @@ OUTER:
 
 		for {
 
-			x := len(c.path) - 1
+			x := len(c.nums) - 1
 
-			if c.path[x].pos == 0 {
+			if c.nums[x] == 0 {
 
+				c.nums = c.nums[:x]
 				c.path = c.path[:x]
 
-				if len(c.path) == 0 {
+				if len(c.nums) == 0 {
 					break OUTER
 				}
 
@@ -132,18 +131,19 @@ OUTER:
 
 		for {
 
-			x := len(c.path) - 1
+			x := len(c.nums) - 1
 
-			if c.path[x].pos-1 >= 0 {
+			if c.nums[x]-1 >= 0 {
 
-				c.path[x].pos--
+				c.nums[x]--
 
 				n := c.node()
 
 				for {
 
 					if num := len(n.edges); num > 0 {
-						c.path = append(c.path, &item{pos: num - 1, node: n})
+						c.nums = append(c.nums, num-1)
+						c.path = append(c.path, n)
 						n = n.edges[num-1]
 						continue
 					}
@@ -177,7 +177,7 @@ func (c *Cursor) Next() ([]byte, *List) {
 OUTER:
 	for {
 
-		if len(c.path) == 0 {
+		if len(c.nums) == 0 {
 			break
 		}
 
@@ -191,7 +191,8 @@ OUTER:
 
 			if len(n.edges) > 0 {
 
-				c.path = append(c.path, &item{pos: 0, node: n})
+				c.nums = append(c.nums, 0)
+				c.path = append(c.path, n)
 				n = n.edges[0]
 
 				if n.isLeaf() {
@@ -213,15 +214,15 @@ OUTER:
 
 		for {
 
-			if len(c.path) == 0 {
+			if len(c.nums) == 0 {
 				break OUTER
 			}
 
-			x := len(c.path) - 1
+			x := len(c.nums) - 1
 
-			if c.path[x].pos+1 < len(c.path[x].node.edges) {
+			if c.nums[x]+1 < len(c.path[x].edges) {
 
-				c.path[x].pos++
+				c.nums[x]++
 
 				n = c.node()
 
@@ -234,6 +235,7 @@ OUTER:
 
 			} else {
 
+				c.nums = c.nums[:x]
 				c.path = c.path[:x]
 
 				continue
@@ -257,7 +259,8 @@ func (c *Cursor) Seek(key []byte) ([]byte, *List) {
 
 	n := c.tree.root
 
-	c.path = nil
+	c.nums = c.nums[:0]
+	c.path = c.path[:0]
 
 	var x int
 
@@ -280,12 +283,12 @@ func (c *Cursor) Seek(key []byte) ([]byte, *List) {
 				if len(c.path) == 0 {
 					return c.first(c.tree.root)
 				}
-				return c.first(c.path[len(c.path)-1].node)
+				return c.first(c.path[len(c.path)-1])
 			} else if s[0] > t.edges[len(t.edges)-1].prefix[0] {
 				if len(c.path) == 0 {
 					break
 				}
-				return c.last(c.path[len(c.path)-1].node)
+				return c.last(c.path[len(c.path)-1])
 			}
 
 			break
@@ -294,23 +297,28 @@ func (c *Cursor) Seek(key []byte) ([]byte, *List) {
 
 		// Consume the search prefix
 		if bytes.Compare(s, n.prefix) == 0 {
-			c.path = append(c.path, &item{pos: x, node: t})
+			c.nums = append(c.nums, x)
+			c.path = append(c.path, t)
 			s = s[:0]
 			continue
 		} else if bytes.HasPrefix(s, n.prefix) {
-			c.path = append(c.path, &item{pos: x, node: t})
+			c.nums = append(c.nums, x)
+			c.path = append(c.path, t)
 			s = s[len(n.prefix):]
 			continue
 		} else if bytes.HasPrefix(n.prefix, s) {
-			c.path = append(c.path, &item{pos: x, node: t})
+			c.nums = append(c.nums, x)
+			c.path = append(c.path, t)
 			s = s[:0]
 			continue
 		} else if bytes.Compare(s, n.prefix) < 0 {
-			c.path = append(c.path, &item{pos: x, node: t})
+			c.nums = append(c.nums, x)
+			c.path = append(c.path, t)
 			s = s[:0]
 			continue
 		} else if bytes.Compare(s, n.prefix) > 0 {
-			c.path = append(c.path, &item{pos: x, node: t})
+			c.nums = append(c.nums, x)
+			c.path = append(c.path, t)
 			c.last(n)
 			return c.Next()
 		}
@@ -319,7 +327,8 @@ func (c *Cursor) Seek(key []byte) ([]byte, *List) {
 
 	}
 
-	c.path = nil
+	c.nums = c.nums[:0]
+	c.path = c.path[:0]
 
 	return nil, nil
 
@@ -331,14 +340,14 @@ func (c *Cursor) node() *Node {
 
 	var x int
 
-	x = len(c.path) - 1
+	x = len(c.nums) - 1
 
-	if len(c.path[x].node.edges) <= c.path[x].pos {
+	if len(c.path[x].edges) <= c.nums[x] {
 		c.Seek(c.seek)
-		x = len(c.path) - 1
+		x = len(c.nums) - 1
 	}
 
-	return c.path[x].node.edges[c.path[x].pos]
+	return c.path[x].edges[c.nums[x]]
 
 }
 
@@ -352,7 +361,8 @@ func (c *Cursor) first(n *Node) ([]byte, *List) {
 		}
 
 		if len(n.edges) > 0 {
-			c.path = append(c.path, &item{pos: 0, node: n})
+			c.nums = append(c.nums, 0)
+			c.path = append(c.path, n)
 			n = n.edges[0]
 		} else {
 			break
@@ -369,7 +379,8 @@ func (c *Cursor) last(n *Node) ([]byte, *List) {
 	for {
 
 		if num := len(n.edges); num > 0 {
-			c.path = append(c.path, &item{pos: num - 1, node: n})
+			c.nums = append(c.nums, num-1)
+			c.path = append(c.path, n)
 			n = n.edges[num-1]
 			continue
 		}

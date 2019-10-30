@@ -434,8 +434,8 @@ func TestIterate(t *testing.T) {
 	Convey("Can iterate to the min", t, func() {
 		k, v := i.First()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[0]))
 		So(k, ShouldResemble, []byte(s[0]))
@@ -446,8 +446,8 @@ func TestIterate(t *testing.T) {
 		for j := 1; j < len(s); j++ {
 			k, v := i.Next()
 			var t []int
-			for _, q := range i.path {
-				t = append(t, q.pos)
+			for _, q := range i.nums {
+				t = append(t, q)
 			}
 			So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[j]))
 			So(k, ShouldResemble, []byte(s[j]))
@@ -464,8 +464,8 @@ func TestIterate(t *testing.T) {
 	Convey("Can iterate to the max", t, func() {
 		k, v := i.Last()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[len(p)-1]))
 		So(k, ShouldResemble, []byte(s[len(p)-1]))
@@ -476,8 +476,8 @@ func TestIterate(t *testing.T) {
 		for j := len(s) - 2; j >= 0; j-- {
 			k, v := i.Prev()
 			var t []int
-			for _, q := range i.path {
-				t = append(t, q.pos)
+			for _, q := range i.nums {
+				t = append(t, q)
 			}
 			So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[j]))
 			So(k, ShouldResemble, []byte(s[j]))
@@ -530,8 +530,8 @@ func TestIterate(t *testing.T) {
 	Convey("Seek half item is correct", t, func() {
 		k, v := i.Seek([]byte(s[10][:len(s[10])-3]))
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[10]))
 		So(k, ShouldResemble, []byte(s[10]))
@@ -541,8 +541,8 @@ func TestIterate(t *testing.T) {
 	Convey("Seek full item is correct", t, func() {
 		k, v := i.Seek([]byte(s[10]))
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[10]))
 		So(k, ShouldResemble, []byte(s[10]))
@@ -552,8 +552,8 @@ func TestIterate(t *testing.T) {
 	Convey("Seek overfull item is correct", t, func() {
 		k, v := i.Seek([]byte(s[10] + "-"))
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
@@ -563,8 +563,8 @@ func TestIterate(t *testing.T) {
 	Convey("Seek finishing item is correct", t, func() {
 		k, v := i.Seek([]byte("/test/zzz"))
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[32]))
 		So(k, ShouldResemble, []byte(s[32]))
@@ -581,8 +581,8 @@ func TestIterate(t *testing.T) {
 		i.Seek([]byte(s[10]))
 		k, v := i.Prev()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[9]))
 		So(k, ShouldResemble, []byte(s[9]))
@@ -593,8 +593,8 @@ func TestIterate(t *testing.T) {
 		i.Seek([]byte(s[10]))
 		k, v := i.Next()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
@@ -606,8 +606,8 @@ func TestIterate(t *testing.T) {
 		i.Del()
 		k, v := i.Next()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
@@ -628,8 +628,8 @@ func TestIterate(t *testing.T) {
 		i.Del()
 		k, v := i.Next()
 		var t []int
-		for _, q := range i.path {
-			t = append(t, q.pos)
+		for _, q := range i.nums {
+			t = append(t, q)
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[15]))
 		So(k, ShouldResemble, []byte(s[15]))
