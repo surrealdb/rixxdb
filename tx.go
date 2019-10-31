@@ -185,6 +185,13 @@ func (tx *TX) forced() error {
 }
 
 // All retrieves a single key:value item.
+func (tx *TX) Cursor() *IT {
+	return &IT{
+		ok: true, cu: tx.tree.Cursor(),
+	}
+}
+
+// All retrieves a single key:value item.
 func (tx *TX) All(key []byte) (kvs []*KV, err error) {
 
 	var v []byte
