@@ -34,7 +34,7 @@ type Cursor struct {
 // Here moves the cursor to the first item in the tree and returns
 // its key and value. If the tree is empty then a nil key and value
 // are returned.
-func (c *Cursor) Here() *List {
+func (c *Cursor) Here() *Trie {
 
 	_, val := c.Seek(c.seek)
 
@@ -45,7 +45,7 @@ func (c *Cursor) Here() *List {
 // Del removes the current item under the cursor from the tree. If
 // the cursor has not yet been positioned using First, Last, or Seek,
 // then no item is deleted and a nil key and value are returned.
-func (c *Cursor) Del() ([]byte, *List) {
+func (c *Cursor) Del() ([]byte, *Trie) {
 
 	_, val := c.Seek(c.seek)
 
@@ -58,7 +58,7 @@ func (c *Cursor) Del() ([]byte, *List) {
 // First moves the cursor to the first item in the tree and returns
 // its key and value. If the tree is empty then a nil key and value
 // are returned.
-func (c *Cursor) First() ([]byte, *List) {
+func (c *Cursor) First() ([]byte, *Trie) {
 
 	c.nums = c.nums[:0]
 	c.path = c.path[:0]
@@ -70,7 +70,7 @@ func (c *Cursor) First() ([]byte, *List) {
 // Last moves the cursor to the last item in the tree and returns its
 // key and value. If the tree is empty then a nil key and value are
 // returned.
-func (c *Cursor) Last() ([]byte, *List) {
+func (c *Cursor) Last() ([]byte, *Trie) {
 
 	c.nums = c.nums[:0]
 	c.path = c.path[:0]
@@ -84,7 +84,7 @@ func (c *Cursor) Last() ([]byte, *List) {
 // returned, and if the cursor is at the start of the tree then a nil key
 // and value are returned. If the cursor has not yet been positioned
 // using First, Last, or Seek, then a nil key and value are returned.
-func (c *Cursor) Prev() ([]byte, *List) {
+func (c *Cursor) Prev() ([]byte, *Trie) {
 
 OUTER:
 	for {
@@ -172,7 +172,7 @@ OUTER:
 // returned, and if the cursor is at the end of the tree then a nil key
 // and value are returned. If the cursor has not yet been positioned
 // using First, Last, or Seek, then a nil key and value are returned.
-func (c *Cursor) Next() ([]byte, *List) {
+func (c *Cursor) Next() ([]byte, *Trie) {
 
 OUTER:
 	for {
@@ -253,7 +253,7 @@ OUTER:
 // Seek moves the cursor to a given key in the tree and returns it.
 // If the specified key does not exist then the next key in the tree
 // is used. If no keys follow, then a nil key and value are returned.
-func (c *Cursor) Seek(key []byte) ([]byte, *List) {
+func (c *Cursor) Seek(key []byte) ([]byte, *Trie) {
 
 	s := key
 
@@ -351,7 +351,7 @@ func (c *Cursor) node() *Node {
 
 }
 
-func (c *Cursor) first(n *Node) ([]byte, *List) {
+func (c *Cursor) first(n *Node) ([]byte, *Trie) {
 
 	for {
 
@@ -374,7 +374,7 @@ func (c *Cursor) first(n *Node) ([]byte, *List) {
 
 }
 
-func (c *Cursor) last(n *Node) ([]byte, *List) {
+func (c *Cursor) last(n *Node) ([]byte, *Trie) {
 
 	for {
 

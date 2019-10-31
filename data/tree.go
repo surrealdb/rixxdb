@@ -39,4 +39,4 @@ func (t *Tree) Copy() *Copy {
 // iterating through the tree using Path, Subs, or Walk. It will be
 // populated with the key and list of the current item, and returns
 // a bool signifying if the iteration should be terminated.
-type Walker func(key []byte, val *List) (exit bool)
+type Walker func(key []byte, val *Trie) (exit bool)

@@ -23,7 +23,7 @@ type IT struct {
 	cu *data.Cursor
 }
 
-func (it *IT) First() ([]byte, *data.List) {
+func (it *IT) First() ([]byte, *data.Trie) {
 	if k, l := it.cu.First(); k != nil {
 		return k, l
 	}
@@ -31,7 +31,7 @@ func (it *IT) First() ([]byte, *data.List) {
 	return nil, nil
 }
 
-func (it *IT) Last() ([]byte, *data.List) {
+func (it *IT) Last() ([]byte, *data.Trie) {
 	if k, l := it.cu.Last(); k != nil {
 		return k, l
 	}
@@ -39,7 +39,7 @@ func (it *IT) Last() ([]byte, *data.List) {
 	return nil, nil
 }
 
-func (it *IT) Prev() ([]byte, *data.List) {
+func (it *IT) Prev() ([]byte, *data.Trie) {
 	if k, l := it.cu.Prev(); k != nil {
 		return k, l
 	}
@@ -47,7 +47,7 @@ func (it *IT) Prev() ([]byte, *data.List) {
 	return nil, nil
 }
 
-func (it *IT) Next() ([]byte, *data.List) {
+func (it *IT) Next() ([]byte, *data.Trie) {
 	if k, l := it.cu.Next(); k != nil {
 		return k, l
 	}
@@ -55,7 +55,7 @@ func (it *IT) Next() ([]byte, *data.List) {
 	return nil, nil
 }
 
-func (it *IT) Seek(key []byte) ([]byte, *data.List) {
+func (it *IT) Seek(key []byte) ([]byte, *data.Trie) {
 	if k, l := it.cu.Seek(key); k != nil {
 		return k, l
 	}

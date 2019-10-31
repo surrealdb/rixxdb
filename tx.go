@@ -241,7 +241,7 @@ func (tx *TX) AllL(key []byte, max uint64) (kvs []*KV, err error) {
 	tx.lock.RLock()
 	defer tx.lock.RUnlock()
 
-	tx.tree.Root().Subs(key, func(k []byte, l *data.List) (e bool) {
+	tx.tree.Root().Subs(key, func(k []byte, l *data.Trie) (e bool) {
 		l.Walk(func(i *data.Item) bool {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return true
@@ -413,7 +413,7 @@ func (tx *TX) ClrL(key []byte, max uint64) (kvs []*KV, err error) {
 	tx.lock.Lock()
 	defer tx.lock.Unlock()
 
-	tx.tree.Root().Subs(key, func(k []byte, l *data.List) (e bool) {
+	tx.tree.Root().Subs(key, func(k []byte, l *data.Trie) (e bool) {
 		if i := l.Max(); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return true
@@ -592,8 +592,8 @@ func (tx *TX) GetL(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
 	tx.lock.RLock()
 	defer tx.lock.RUnlock()
 
-	tx.tree.Root().Subs(key, func(k []byte, l *data.List) (e bool) {
-		if i := l.Get(ver, data.Upto); i != nil && i.Val() != nil {
+	tx.tree.Root().Subs(key, func(k []byte, l *data.Trie) (e bool) {
+		if i := l.Predecessor(ver); i != nil && i.Val() != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return true
 			}
@@ -630,7 +630,7 @@ func (tx *TX) GetP(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
 	c := tx.tree.Cursor()
 
 	for k, l := c.Seek(key); max > 0 && k != nil && bytes.HasPrefix(k, key); k, l = c.Next() {
-		if i := l.Get(ver, data.Upto); i != nil && i.Val() != nil {
+		if i := l.Predecessor(ver); i != nil && i.Val() != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return nil, err
 			}
@@ -674,7 +674,7 @@ func (tx *TX) GetR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err erro
 	case d <= 0:
 
 		for k, l := c.Seek(beg); max > 0 && k != nil && bytes.Compare(k, end) < 0; k, l = c.Next() {
-			if i := l.Get(ver, data.Upto); i != nil && i.Val() != nil {
+			if i := l.Predecessor(ver); i != nil && i.Val() != nil {
 				if v, err = tx.dec(i.Val()); err != nil {
 					return nil, err
 				}
@@ -691,7 +691,7 @@ func (tx *TX) GetR(ver uint64, beg, end []byte, max uint64) (kvs []*KV, err erro
 		}
 
 		for ; max > 0 && k != nil && bytes.Compare(end, k) < 0; k, l = c.Prev() {
-			if i := l.Get(ver, data.Upto); i != nil && i.Val() != nil {
+			if i := l.Predecessor(ver); i != nil && i.Val() != nil {
 				if v, err = tx.dec(i.Val()); err != nil {
 					return nil, err
 				}
@@ -817,7 +817,7 @@ func (tx *TX) DelL(ver uint64, key []byte, max uint64) (kvs []*KV, err error) {
 	tx.lock.Lock()
 	defer tx.lock.Unlock()
 
-	tx.tree.Root().Subs(key, func(k []byte, l *data.List) (e bool) {
+	tx.tree.Root().Subs(key, func(k []byte, l *data.Trie) (e bool) {
 		if i := l.Put(ver, nil); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return true
@@ -1067,7 +1067,7 @@ func (tx *TX) PutL(ver uint64, key, val []byte, max uint64) (kvs []*KV, err erro
 	tx.lock.Lock()
 	defer tx.lock.Unlock()
 
-	tx.tree.Root().Subs(key, func(k []byte, l *data.List) (e bool) {
+	tx.tree.Root().Subs(key, func(k []byte, l *data.Trie) (e bool) {
 		if i := l.Put(ver, val); i != nil {
 			if v, err = tx.dec(i.Val()); err != nil {
 				return true

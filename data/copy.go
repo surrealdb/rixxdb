@@ -47,7 +47,7 @@ func (c *Copy) Cursor() *Cursor {
 }
 
 // All is used to retrieve a specific key, returning all list values.
-func (c *Copy) All(key []byte) *List {
+func (c *Copy) All(key []byte) *Trie {
 	return c.root.get(key)
 }
 
@@ -66,7 +66,7 @@ func (c *Copy) Cut(key []byte) *Item {
 // Get is used to retrieve a specific key, returning the current value.
 func (c *Copy) Get(ver uint64, key []byte) *Item {
 	if val := c.root.get(key); val != nil {
-		return val.Get(ver, Upto)
+		return val.Predecessor(ver)
 	}
 	return nil
 }
@@ -172,7 +172,7 @@ func (c *Copy) put(p, n *Node, t uint64, s, k, v []byte) (*Node, *leaf, *Item) {
 
 		// Create the leaf if necessary
 		if !n.isLeaf() {
-			d.leaf = &leaf{key: k, val: new(List)}
+			d.leaf = &leaf{key: k, val: newTrie()}
 		}
 
 		// Return the new node and leaf node
@@ -188,7 +188,7 @@ func (c *Copy) put(p, n *Node, t uint64, s, k, v []byte) (*Node, *leaf, *Item) {
 		e := &Node{
 			leaf: &leaf{
 				key: k,
-				val: new(List),
+				val: newTrie(),
 			},
 			prefix: s,
 		}
@@ -227,7 +227,7 @@ func (c *Copy) put(p, n *Node, t uint64, s, k, v []byte) (*Node, *leaf, *Item) {
 	// Create a new leaf node
 	leaf := &leaf{
 		key: k,
-		val: new(List),
+		val: newTrie(),
 	}
 	leaf.val.Put(t, v)
 

@@ -588,13 +588,13 @@ func TestOperations(t *testing.T) {
 		So(kvs[2].Val(), ShouldResemble, []byte("TB1"))
 
 		kv, err = tx.PutC(15, []byte("/kv/ns/db/tb1"), []byte("TB-1"), []byte("TB1"))
-		So(kv.Val(), ShouldResemble, []byte("TB1"))
+		So(kv.Val(), ShouldResemble, []byte(nil))
 
 		kv, err = tx.PutC(15, []byte("/kv/ns/db/tb2"), []byte("TB-2"), []byte("TB2"))
-		So(kv.Val(), ShouldResemble, []byte("TB2"))
+		So(kv.Val(), ShouldResemble, []byte(nil))
 
 		kv, err = tx.PutC(15, []byte("/kv/ns/db/tb3"), []byte("TB-3"), []byte("TB3"))
-		So(kv.Val(), ShouldResemble, []byte("TB3"))
+		So(kv.Val(), ShouldResemble, []byte(nil))
 
 		kv, err = tx.PutC(15, []byte("/kv/ns/db/tb1"), []byte("TB-4"), []byte("TB4"))
 		So(err, ShouldEqual, ErrTxNotExpectedValue)

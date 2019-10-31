@@ -191,20 +191,20 @@ func TestComplex(t *testing.T) {
 	Convey("Can get proper `min`", t, func() {
 		k, v := c.Root().Min()
 		So(k, ShouldResemble, []byte("/some"))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte("/some"))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte("/some"))
 	})
 
 	Convey("Can get proper `max`", t, func() {
 		k, v := c.Root().Max()
 		So(k, ShouldResemble, []byte("/zoo/some/path"))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte("/zoo/some/path"))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte("/zoo/some/path"))
 	})
 
 	// ------------------------------------------------------------
 
 	Convey("Can iterate tree items at `nil` with `walk`", t, func() {
 		i := 0
-		c.Root().Walk(nil, func(k []byte, v *List) (e bool) {
+		c.Root().Walk(nil, func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -213,7 +213,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/s` with `walk`", t, func() {
 		i := 0
-		c.Root().Walk([]byte("/test/zen/s"), func(k []byte, v *List) (e bool) {
+		c.Root().Walk([]byte("/test/zen/s"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -222,7 +222,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `walk`", t, func() {
 		i := 0
-		c.Root().Walk([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Walk([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -231,7 +231,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-o` with `walk`", t, func() {
 		i := 0
-		c.Root().Walk([]byte("/test/zen/sub-o"), func(k []byte, v *List) (e bool) {
+		c.Root().Walk([]byte("/test/zen/sub-o"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -240,7 +240,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-one` with `walk`", t, func() {
 		i := 0
-		c.Root().Walk([]byte("/test/zen/sub-one"), func(k []byte, v *List) (e bool) {
+		c.Root().Walk([]byte("/test/zen/sub-one"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -249,7 +249,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `walk` and exit", t, func() {
 		i := 0
-		c.Root().Walk([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Walk([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return true
 		})
@@ -260,7 +260,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/` with `subs`", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -269,7 +269,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/s` with `subs`", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/zen/s"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/zen/s"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -278,7 +278,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `subs`", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -287,7 +287,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-o` with `subs`", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/zen/sub-t"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/zen/sub-t"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -296,7 +296,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-one` with `subs`", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/zen/sub-one"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/zen/sub-one"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -305,7 +305,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `subs` and exit", t, func() {
 		i := 0
-		c.Root().Subs([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Subs([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return true
 		})
@@ -316,7 +316,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `nil` with `path`", t, func() {
 		i := 0
-		c.Root().Path(nil, func(k []byte, v *List) (e bool) {
+		c.Root().Path(nil, func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -325,7 +325,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/s` with `path`", t, func() {
 		i := 0
-		c.Root().Path([]byte("/test/zen/s"), func(k []byte, v *List) (e bool) {
+		c.Root().Path([]byte("/test/zen/s"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -334,7 +334,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `path`", t, func() {
 		i := 0
-		c.Root().Path([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Path([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -343,7 +343,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-o` with `path`", t, func() {
 		i := 0
-		c.Root().Path([]byte("/test/zen/sub-o"), func(k []byte, v *List) (e bool) {
+		c.Root().Path([]byte("/test/zen/sub-o"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -352,7 +352,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub-one` with `path`", t, func() {
 		i := 0
-		c.Root().Path([]byte("/test/zen/sub-one"), func(k []byte, v *List) (e bool) {
+		c.Root().Path([]byte("/test/zen/sub-one"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return
 		})
@@ -361,7 +361,7 @@ func TestComplex(t *testing.T) {
 
 	Convey("Can iterate tree items at `/test/zen/sub` with `path` and exit", t, func() {
 		i := 0
-		c.Root().Path([]byte("/test/zen/sub"), func(k []byte, v *List) (e bool) {
+		c.Root().Path([]byte("/test/zen/sub"), func(k []byte, v *Trie) (e bool) {
 			i++
 			return true
 		})
@@ -439,7 +439,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[0]))
 		So(k, ShouldResemble, []byte(s[0]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[0]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[0]))
 	})
 
 	Convey("Can iterate using `next`", t, func() {
@@ -451,7 +451,7 @@ func TestIterate(t *testing.T) {
 			}
 			So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[j]))
 			So(k, ShouldResemble, []byte(s[j]))
-			So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[j]))
+			So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[j]))
 		}
 	})
 
@@ -469,7 +469,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[len(p)-1]))
 		So(k, ShouldResemble, []byte(s[len(p)-1]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[len(p)-1]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[len(p)-1]))
 	})
 
 	Convey("Can iterate using `prev`", t, func() {
@@ -481,7 +481,7 @@ func TestIterate(t *testing.T) {
 			}
 			So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[j]))
 			So(k, ShouldResemble, []byte(s[j]))
-			So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[j]))
+			So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[j]))
 		}
 	})
 
@@ -494,19 +494,19 @@ func TestIterate(t *testing.T) {
 	Convey("Seek nonexistant nil", t, func() {
 		k, v := i.Seek(nil)
 		So(k, ShouldResemble, []byte(s[0]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[0]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[0]))
 	})
 
 	Convey("Seek nonexistant first byte", t, func() {
 		k, v := i.Seek([]byte{0})
 		So(k, ShouldResemble, []byte(s[0]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[0]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[0]))
 	})
 
 	Convey("Seek nonexistant first item", t, func() {
 		k, v := i.Seek([]byte("/aaa"))
 		So(k, ShouldResemble, []byte(s[0]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[0]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[0]))
 	})
 
 	Convey("Seek just over last item", t, func() {
@@ -535,7 +535,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[10]))
 		So(k, ShouldResemble, []byte(s[10]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[10]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[10]))
 	})
 
 	Convey("Seek full item is correct", t, func() {
@@ -546,7 +546,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[10]))
 		So(k, ShouldResemble, []byte(s[10]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[10]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[10]))
 	})
 
 	Convey("Seek overfull item is correct", t, func() {
@@ -557,7 +557,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[11]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[11]))
 	})
 
 	Convey("Seek finishing item is correct", t, func() {
@@ -568,7 +568,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[32]))
 		So(k, ShouldResemble, []byte(s[32]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[32]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[32]))
 	})
 
 	Convey("Seek finalising item is correct", t, func() {
@@ -586,7 +586,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[9]))
 		So(k, ShouldResemble, []byte(s[9]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[9]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[9]))
 	})
 
 	Convey("Next item after seek is correct", t, func() {
@@ -598,7 +598,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[11]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[11]))
 	})
 
 	Convey("FINAL", t, func() {
@@ -611,7 +611,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[11]))
 		So(k, ShouldResemble, []byte(s[11]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[11]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[11]))
 	})
 
 	Convey("FINAL", t, func() {
@@ -633,7 +633,7 @@ func TestIterate(t *testing.T) {
 		}
 		So(fmt.Sprint(t), ShouldEqual, fmt.Sprint(p[15]))
 		So(k, ShouldResemble, []byte(s[15]))
-		So(v.Get(0, Upto).Val(), ShouldResemble, []byte(s[15]))
+		So(v.Predecessor(0).Val(), ShouldResemble, []byte(s[15]))
 	})
 
 }
@@ -713,8 +713,7 @@ func TestVersion(t *testing.T) {
 
 	Convey("Can update a 1st versioned item", t, func() {
 		val := c.Put(6, []byte("/one"), []byte("ONE-NEW"))
-		So(val, ShouldNotBeNil)
-		So(val.Val(), ShouldResemble, []byte("ONE"))
+		So(val, ShouldBeNil)
 		So(c.Size(), ShouldEqual, 1)
 		So(c.Get(3, []byte("/one")), ShouldBeNil)
 		So(c.Get(5, []byte("/one")).Val(), ShouldResemble, []byte("ONE"))
@@ -725,19 +724,19 @@ func TestVersion(t *testing.T) {
 		i := c.Cursor()
 		k, v := i.Seek([]byte("/one"))
 		So(k, ShouldResemble, []byte("/one"))
-		So(v.Get(m, Upto).Val(), ShouldResemble, []byte("ONE-NEW"))
-		So(i.Here().Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(1, Upto), ShouldBeNil)
+		So(v.Predecessor(m).Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(i.Here().Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(1), ShouldBeNil)
 		So(i.Here().Min().Val(), ShouldResemble, []byte("ONE"))
 		So(i.Here().Max().Val(), ShouldResemble, []byte("ONE-NEW"))
-		So(i.Here().Get(5, Upto).Ver(), ShouldEqual, 5)
-		So(i.Here().Get(5, Upto).Val(), ShouldResemble, []byte("ONE"))
-		So(i.Here().Get(6, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(6, Upto).Val(), ShouldResemble, []byte("ONE-NEW"))
-		So(i.Here().Get(9, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(9, Upto).Val(), ShouldResemble, []byte("ONE-NEW"))
-		So(i.Here().Get(m, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(m, Upto).Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(i.Here().Predecessor(5).Ver(), ShouldEqual, 5)
+		So(i.Here().Predecessor(5).Val(), ShouldResemble, []byte("ONE"))
+		So(i.Here().Predecessor(6).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(6).Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(i.Here().Predecessor(9).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(9).Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(i.Here().Predecessor(m).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(m).Val(), ShouldResemble, []byte("ONE-NEW"))
 	})
 
 	Convey("Can iterate and walk over the item and exit", t, func() {
@@ -764,8 +763,7 @@ func TestVersion(t *testing.T) {
 
 	Convey("Can remove a 1st versioned item", t, func() {
 		val := c.Put(8, []byte("/one"), nil)
-		So(val.Val(), ShouldNotBeNil)
-		So(val.Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(val, ShouldBeNil)
 		So(c.Size(), ShouldEqual, 1)
 		So(c.Get(0, []byte("/one")), ShouldBeNil)
 		So(c.Get(3, []byte("/one")), ShouldBeNil)
@@ -778,12 +776,12 @@ func TestVersion(t *testing.T) {
 		i := c.Cursor()
 		k, v := i.Seek([]byte("/one"))
 		So(k, ShouldResemble, []byte("/one"))
-		So(v.Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(3, Upto), ShouldBeNil)
-		So(i.Here().Get(5, Upto).Val(), ShouldResemble, []byte("ONE"))
-		So(i.Here().Get(7, Upto).Val(), ShouldResemble, []byte("ONE-NEW"))
-		So(i.Here().Get(9, Upto).Val(), ShouldResemble, []byte(nil))
+		So(v.Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(3), ShouldBeNil)
+		So(i.Here().Predecessor(5).Val(), ShouldResemble, []byte("ONE"))
+		So(i.Here().Predecessor(7).Val(), ShouldResemble, []byte("ONE-NEW"))
+		So(i.Here().Predecessor(9).Val(), ShouldResemble, []byte(nil))
 	})
 
 	Convey("Can insert a 2nd versioned item", t, func() {
@@ -797,8 +795,7 @@ func TestVersion(t *testing.T) {
 
 	Convey("Can update a 2nd versioned item", t, func() {
 		val := c.Put(6, []byte("/two"), []byte("TWO-NEW"))
-		So(val.Val(), ShouldNotBeNil)
-		So(val.Val(), ShouldResemble, []byte("TWO"))
+		So(val, ShouldBeNil)
 		So(c.Size(), ShouldEqual, 2)
 		So(c.Get(3, []byte("/two")), ShouldBeNil)
 		So(c.Get(5, []byte("/two")).Val(), ShouldResemble, []byte("TWO"))
@@ -809,19 +806,19 @@ func TestVersion(t *testing.T) {
 		i := c.Cursor()
 		k, v := i.Seek([]byte("/two"))
 		So(k, ShouldResemble, []byte("/two"))
-		So(v.Get(m, Upto).Val(), ShouldResemble, []byte("TWO-NEW"))
-		So(i.Here().Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(1, Upto), ShouldBeNil)
+		So(v.Predecessor(m).Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(i.Here().Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(1), ShouldBeNil)
 		So(i.Here().Min().Val(), ShouldResemble, []byte("TWO"))
 		So(i.Here().Max().Val(), ShouldResemble, []byte("TWO-NEW"))
-		So(i.Here().Get(5, Upto).Ver(), ShouldEqual, 5)
-		So(i.Here().Get(5, Upto).Val(), ShouldResemble, []byte("TWO"))
-		So(i.Here().Get(6, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(6, Upto).Val(), ShouldResemble, []byte("TWO-NEW"))
-		So(i.Here().Get(9, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(9, Upto).Val(), ShouldResemble, []byte("TWO-NEW"))
-		So(i.Here().Get(m, Upto).Ver(), ShouldEqual, 6)
-		So(i.Here().Get(m, Upto).Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(i.Here().Predecessor(5).Ver(), ShouldEqual, 5)
+		So(i.Here().Predecessor(5).Val(), ShouldResemble, []byte("TWO"))
+		So(i.Here().Predecessor(6).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(6).Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(i.Here().Predecessor(9).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(9).Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(i.Here().Predecessor(m).Ver(), ShouldEqual, 6)
+		So(i.Here().Predecessor(m).Val(), ShouldResemble, []byte("TWO-NEW"))
 	})
 
 	Convey("Can iterate and walk over the item and exit", t, func() {
@@ -848,8 +845,7 @@ func TestVersion(t *testing.T) {
 
 	Convey("Can remove a 2nd versioned item", t, func() {
 		val := c.Put(8, []byte("/two"), nil)
-		So(val.Val(), ShouldNotBeNil)
-		So(val.Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(val, ShouldBeNil)
 		So(c.Size(), ShouldEqual, 2)
 		So(c.Get(0, []byte("/two")), ShouldBeNil)
 		So(c.Get(3, []byte("/two")), ShouldBeNil)
@@ -862,12 +858,12 @@ func TestVersion(t *testing.T) {
 		i := c.Cursor()
 		k, v := i.Seek([]byte("/two"))
 		So(k, ShouldResemble, []byte("/two"))
-		So(v.Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(0, Upto), ShouldBeNil)
-		So(i.Here().Get(3, Upto), ShouldBeNil)
-		So(i.Here().Get(5, Upto).Val(), ShouldResemble, []byte("TWO"))
-		So(i.Here().Get(7, Upto).Val(), ShouldResemble, []byte("TWO-NEW"))
-		So(i.Here().Get(9, Upto).Val(), ShouldResemble, []byte(nil))
+		So(v.Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(0), ShouldBeNil)
+		So(i.Here().Predecessor(3), ShouldBeNil)
+		So(i.Here().Predecessor(5).Val(), ShouldResemble, []byte("TWO"))
+		So(i.Here().Predecessor(7).Val(), ShouldResemble, []byte("TWO-NEW"))
+		So(i.Here().Predecessor(9).Val(), ShouldResemble, []byte(nil))
 	})
 
 	Convey("Can delete the latest version", t, func() {
@@ -882,7 +878,7 @@ func TestVersion(t *testing.T) {
 
 	Convey("Can delete invalid version", t, func() {
 		val := c.Del(3, []byte("/one"))
-		So(val.Val(), ShouldBeNil)
+		So(val, ShouldBeNil)
 		So(c.Size(), ShouldEqual, 2)
 		So(c.Get(3, []byte("/one")).Val(), ShouldBeNil)
 		So(c.Get(5, []byte("/one")).Val(), ShouldBeNil)
