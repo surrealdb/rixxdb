@@ -21,9 +21,6 @@ var (
 	// ErrDbClosed occurs when a DB is accessed after it is closed.
 	ErrDbClosed = errors.New("DB is not open")
 
-	// ErrDbClosed occurs when a DB path is epcified incorrectly.
-	ErrDbPathError = errors.New("DB path error")
-
 	// ErrDbMemoryOnly occurs when persisting an in-memory DB.
 	ErrDbMemoryOnly = errors.New("DB is memory-only")
 
@@ -33,14 +30,8 @@ var (
 	// ErrDbAlreadyShrinking occurs when a shrink is already in progress.
 	ErrDbAlreadyShrinking = errors.New("DB is already shrinking")
 
-	// ErrDbFileVersionMismatch occurs when the file version is inavlid.
-	ErrDbFileVersionMismatch = errors.New("DB file version incorrect")
-
 	// ErrDbFileContentsInvalid occurs when the file is invalid or currupted.
 	ErrDbFileContentsInvalid = errors.New("DB file contents invalid")
-
-	// ErrDbInvalidSizePolicy occurs when the provided size policy is invalid.
-	ErrDbInvalidSizePolicy = errors.New("DB file size policy invalid")
 
 	// ErrDbInvalidEncryptionKey occurs when the provided encryption key is invalid.
 	ErrDbInvalidEncryptionKey = errors.New("DB encryption key invalid")
@@ -56,9 +47,6 @@ var (
 
 	// ErrTxNotEditable occurs when calling manually closing a managed transaction.
 	ErrTxNotEditable = errors.New("TX is not editable")
-
-	// ErrTxIgnoringDurability occurs when a transaction sync is buffered while shrinking.
-	ErrTxIgnoringDurability = errors.New("TX durability ignored")
 
 	// ErrKvNotExpectedValue occurs when using a nil key in put, select, or delete methods.
 	ErrTxKeyCanNotBeNil = errors.New("TX key can not be nil")
