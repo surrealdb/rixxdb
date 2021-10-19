@@ -2,7 +2,7 @@
 
 RixxDB is a versioned, embedded, strongly-consistent, key-value database.
 
-[![](https://img.shields.io/circleci/token/a14c078bae83a29af4ee8945c52b51e1839dd7d4/project/abcum/rixxdb/master.svg?style=flat-square)](https://circleci.com/gh/abcum/rixxdb) [![](https://img.shields.io/badge/status-alpha-ff00bb.svg?style=flat-square)](https://github.com/abcum/rixxdb) [![](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/abcum/rixxdb) [![](https://goreportcard.com/badge/github.com/abcum/rixxdb?style=flat-square)](https://goreportcard.com/report/github.com/abcum/rixxdb) [![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/abcum/rixxdb) 
+[![](https://img.shields.io/badge/status-alpha-ff00bb.svg?style=flat-square)](https://github.com/surrealdb/rixxdb) [![](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/surrealdb/rixxdb) [![](https://goreportcard.com/badge/github.com/surrealdb/rixxdb?style=flat-square)](https://goreportcard.com/report/github.com/surrealdb/rixxdb) [![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/rixxdb) 
 
 #### Features
 
@@ -20,5 +20,5 @@ RixxDB is a versioned, embedded, strongly-consistent, key-value database.
 #### Installation
 
 ```bash
-go get github.com/abcum/rixxdb
+go get github.com/surrealdb/rixxdb
 ```

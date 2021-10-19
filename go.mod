@@ -1,4 +1,4 @@
-module github.com/abcum/rixxdb
+module github.com/surrealdb/rixxdb
 
 go 1.15
 
